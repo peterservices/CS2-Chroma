@@ -1,0 +1,29 @@
+[project]
+name = "cs2-chroma"
+license = "MIT"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic>=2.12.5",
+    "requests>=2.32.5",
+]
+
+[tool.ruff.lint]
+extend-select = [
+    "F",
+    "W",
+    "E",
+    "I",
+    "UP",
+    "C4",
+    "ISC",
+    "ICN",
+    "RET",
+    "SIM",
+    "TID",
+    "PYI"
+]
+ignore = [
+    "E501",
+    "SIM117"
+]
