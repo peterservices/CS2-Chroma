@@ -27,6 +27,15 @@ class ChromaState(BaseModel):
     previous_effects: list[ChromaEffect] = []
 
     def find_effect_by_id(self, id: str) -> ChromaEffect | None:
+        """
+        Finds an effect in the active effects by its id.
+
+        :param id: The effect id to look for.
+        :type id: str
+
+        :return: The `ChromaEffect`, if found, or None.
+        :rtype: ChromaEffect | None
+        """
         for effect in self.effects:
             if effect.id == id:
                 return effect
@@ -35,6 +44,9 @@ class ChromaState(BaseModel):
     def add_effect(self, effect: ChromaEffect) -> None:
         """
         Adds an effect to the effects list, respecting hierarchy. If an effect does not have a valid id it will be treated as highest hierarchy.
+
+        :param effect: The effect to be added to the active effects.
+        :type effect: ChromaEffect
         """
         effect_id_hierarchy = [ # Lowest to highest
             "movement_key_indicator",
@@ -82,15 +94,17 @@ class ChromaControl(requests.Session):
         effect_thread.start()
 
     def start_heartbeat(self) -> None:
+        """
+        Starts a heartbeat to the Razer Chroma SDK in a seperate thread.
+        """
         heartbeat_thread = threading.Thread(target=self.heartbeat, daemon=True)
         heartbeat_thread.start()
 
     def heartbeat(self) -> None:
         """
-        Pings the Razer Chrome SDK every 5 seconds.
+        Pings the Razer Chroma SDK every 5 seconds.
         """
         while self.connected_event.is_set():
-            print("heartbeat")
             with contextlib.suppress(requests.exceptions.Timeout, requests.exceptions.ConnectionError):
                 self.request("PUT", self.url + "/heartbeat", timeout=0.00001)
             time.sleep(5)
@@ -120,10 +134,17 @@ class ChromaControl(requests.Session):
         self.state = ChromaState()
 
         time.sleep(2) # Give the Chroma SDK time to intialize the app before resetting the keyboard RGB
-        with contextlib.suppress(requests.exceptions.Timeout, requests.exceptions.ConnectionError):
-            self.request("PUT", self.url + "/keyboard", json={"effect": "CHROMA_NONE"}, timeout=0.00001)
+        result = self.request("PUT", self.url + "/keyboard", json={"effect": "CHROMA_NONE"}).json()
 
-        print(self.url)
+        # Check that we successfully set the keyboard's color
+        if result["result"] != 0:
+            self.disconnect()
+            if result["result"] == 126:
+                print(f"[CHROMA] Failed to set Chroma keyboard color, disconnecting from Razer Chroma SDK. This error is usually caused by having the non-BETA version of Razer Synapse 4 installed. Code: {result["result"]}")
+            else:
+                print(f"[CHROMA] Failed to set Chroma keyboard color, disconnecting from Razer Chroma SDK. Code: {result["result"]}")
+        else:
+            print(f"[CHROMA] Connected to {self.url}")
 
     def disconnect(self) -> None:
         """
@@ -133,9 +154,13 @@ class ChromaControl(requests.Session):
         with contextlib.suppress(requests.exceptions.Timeout, requests.exceptions.ConnectionError):
             self.request("DELETE", self.url, timeout=0.00001)
 
+        print(f"[CHROMA] Disconnected from {self.url}")
+
     def update_effects(self) -> None:
+        """
+        Updates the keyboard's color with active effects, and update any effect animations.
+        """
         while True:
-            start = time.time()
             self.connected_event.wait()
 
             expiring_effects = []
@@ -291,7 +316,6 @@ class ChromaControl(requests.Session):
                                      "param": colors
                                      },
                                  timeout=0.00001)
-                print(time.time()-start)
             elif effect_changed:
                 with contextlib.suppress(requests.exceptions.Timeout, requests.exceptions.ConnectionError):
                     self.request("PUT", self.url + "/keyboard", json={"effect": "CHROMA_NONE"}, timeout=0.00001)
