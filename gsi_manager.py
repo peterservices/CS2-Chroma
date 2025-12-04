@@ -340,12 +340,14 @@ class GamestateServer(http.server.HTTPServer):
                 # Update game result indicator
                 if self.config.effects.game_result_effect:
                     effect = self.chroma_control.state.find_effect_by_id("result")
-                    if self.gamestate_manager.round is not None and self.gamestate_manager.round.win_team is not None and self.gamestate_manager.map is not None and self.gamestate_manager.map.phase == "gameover":
+                    if self.gamestate_manager.map is not None and self.gamestate_manager.map.phase == "gameover":
                         if effect is None:
-                            if self.gamestate_manager.round.win_team == self.gamestate_manager.player.team:
+                            if (self.gamestate_manager.player.team == "CT" and self.gamestate_manager.map.ct_team.score > self.gamestate_manager.map.t_team.score) or (self.gamestate_manager.player.team == "T" and self.gamestate_manager.map.ct_team.score < self.gamestate_manager.map.t_team.score):
                                 result_colors = create_wave_effect(colors=[(0, 255, 0), (105, 246, 104), (31, 201, 31)], line_orientation="VERTICAL", mode="CLUSTER")
-                            else:
+                            elif self.gamestate_manager.map.ct_team.score != self.gamestate_manager.map.t_team.score:
                                 result_colors = create_wave_effect(colors=[(255, 0, 0), (246, 105, 104), (201, 31, 31)], line_orientation="VERTICAL", mode="CLUSTER")
+                            else:
+                                result_colors = create_wave_effect(colors=[(150, 150, 150), (205, 205, 205), (90, 90, 90)], line_orientation="VERTICAL", mode="CLUSTER")
 
                             effect = ChromaEffect(
                                 type="WAVE",
