@@ -207,10 +207,10 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                                     effect.decay_amount = 25 / 255
                         gamestate_manager.player.state.in_smoke = _payload["smoked"] != 0
 
-                    if gamestate_manager.player.state.is_burning != (_payload["burning"] != 0):
+                    if gamestate_manager.player.state.is_burning != (_payload["burning"] == 255):
                         if self.server.config.effects.burning_effect:
                             effect = chroma_control.state.find_effect_by_id("fire")
-                            if _payload["burning"] != 0:
+                            if _payload["burning"] == 255:
                                 if effect is not None:
                                     chroma_control.state.effects.remove(effect)
                                 burn_colors = create_wave_effect(colors=[(255, 81, 0), (255, 0, 0)], line_orientation="HORIZONTAL", mode="ALTERNATING")
@@ -228,7 +228,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                                 if effect is not None:
                                     effect.last_update = time.time()
                                     effect.decay_amount = 128 / 255
-                        gamestate_manager.player.state.is_burning = _payload["burning"] != 0
+                        gamestate_manager.player.state.is_burning = _payload["burning"] == 255
 
             # Weapons
             if "weapons" in payload["player"]:
@@ -243,7 +243,8 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                             if v["ammo_clip"] < weapons_dict[k].ammo_clip and weapons_dict[k].active and self.server.config.effects.shoot_effect:
                                 effect = chroma_control.state.find_effect_by_id("shoot")
                                 if effect is not None:
-                                    effect.expires_after_updates = 3
+                                    effect.expires_after_updates = 1
+                                    effect.last_update = time.time()
                                 else:
                                     shoot_color = rgb_to_float((25, 25, 25))
                                     shoot_effect = ChromaEffect(
@@ -252,6 +253,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                                         colors=[[shoot_color for _ in range(22)] for _ in range(6)],
                                         update_rate=0.15,
                                         expires_after_updates=1,
+                                        last_update=time.time(),
                                         id="shoot"
                                     )
                                     chroma_control.state.add_effect(shoot_effect)
@@ -286,6 +288,7 @@ class GamestateServer(http.server.HTTPServer):
 
         super().__init__(address, RequestHandler)
 
+        # Run the background monitor task
         thread = threading.Thread(target=self.background_monitor, daemon=True)
         thread.start()
 
@@ -293,18 +296,20 @@ class GamestateServer(http.server.HTTPServer):
         """
         Completes various background tasks.
 
-        - Checks to see if the game has pinged the server in the last 10 seconds.
-        - Updates defusal indicator
+        - Checks to see if the game has pinged the server in the last 6 seconds.
+        - Updates various indicator
         """
         while True:
-            time.sleep(0.1)
+            time.sleep(0.1) # If we don't wait, other threads may be severely slowed down
             # Detect game close
-            if time.time() - self.gamestate_manager.last_heartbeat > 6:
+            if time.time() - self.gamestate_manager.last_heartbeat > 6: # Allow an extra second of missed heartbeats to be sure the game is actually closed
                 if self.chroma_control.connected_event.is_set():
+                    print("[CHROMA] Lost connection to game")
                     self.chroma_control.disconnect()
                     if self.config.close_after_game_close:
                         sys.exit()
             elif not self.chroma_control.connected_event.is_set():
+                print("[CHROMA] Connected to game")
                 self.chroma_control.connect()
 
             if self.chroma_control.connected_event.is_set():
@@ -332,6 +337,7 @@ class GamestateServer(http.server.HTTPServer):
                     elif effect is not None:
                         self.chroma_control.state.effects.remove(effect)
 
+                # Update game result indicator
                 if self.config.effects.game_result_effect:
                     effect = self.chroma_control.state.find_effect_by_id("result")
                     if self.gamestate_manager.round is not None and self.gamestate_manager.round.win_team is not None and self.gamestate_manager.map is not None and self.gamestate_manager.map.phase == "gameover":
@@ -353,6 +359,7 @@ class GamestateServer(http.server.HTTPServer):
                     elif effect is not None:
                         self.chroma_control.state.effects.remove(effect)
 
+                # Update movement key indicators
                 if self.config.movement_key_indicators:
                     effect = self.chroma_control.state.find_effect_by_id("movement_key_indicator")
                     if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None:
@@ -384,6 +391,7 @@ class GamestateServer(http.server.HTTPServer):
                     elif effect is not None:
                         self.chroma_control.state.effects.remove(effect)
 
+                # Update interaction key indicators
                 if self.config.interaction_key_indicators:
                     effect = self.chroma_control.state.find_effect_by_id("interaction_key_indicator")
                     if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None:
@@ -414,6 +422,7 @@ class GamestateServer(http.server.HTTPServer):
                     elif effect is not None:
                         self.chroma_control.state.effects.remove(effect)
 
+                # Update inventory key indicators depending on inventory content
                 if self.config.inventory_key_indicators:
                     effect = self.chroma_control.state.find_effect_by_id("inventory_key_indicator")
                     if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None:
@@ -432,20 +441,20 @@ class GamestateServer(http.server.HTTPServer):
                         for _, v in self.gamestate_manager.player.state.weapons.items():
                             match v.type:
                                 case "Pistol":
-                                    effect.colors[1][3] = key_color
+                                    effect.colors[1][3] = key_color # 2
                                 case "Knife":
-                                    effect.colors[1][4] = key_color
+                                    effect.colors[1][4] = key_color # 3
                                 case "Grenade":
-                                    effect.colors[1][5] = key_color
+                                    effect.colors[1][5] = key_color # 4
                                 case "StackableItem":
-                                    effect.colors[4][4] = key_color
+                                    effect.colors[4][4] = key_color # X
                                 case "C4":
-                                    effect.colors[1][6] = key_color
+                                    effect.colors[1][6] = key_color # 5
                                 case _:
                                     if v.name == "weapon_taser":
-                                        effect.colors[1][4] = key_color
+                                        effect.colors[1][4] = key_color # 3
                                     else:
-                                        effect.colors[1][2] = key_color
+                                        effect.colors[1][2] = key_color # 1
                     elif effect is not None:
                         self.chroma_control.state.effects.remove(effect)
 # By @peterservices
