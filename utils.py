@@ -67,7 +67,7 @@ class GameState(BaseModel):
 class EffectConfiguration(BaseModel):
     shoot_effect: bool = True
     kill_effect: bool = True
-    smoke_effect:bool = True
+    smoke_effect: bool = True
     burning_effect: bool = True
     flash_effect: bool = True
     death_effect: bool = True
@@ -85,31 +85,25 @@ class Configuration(BaseModel):
 
 def rgb_to_float(rgb: tuple[int, int, int]) -> tuple[float, float, float]:
     """
-    Converts an RGB color to a float color.
+    Convert an RGB color to a float color.
     """
-    rgb_float = []
-    for color in rgb:
-        rgb_float.append(color/255)
-    return tuple(rgb_float)
+    return tuple(color / 255 for color in rgb)
 
 def float_to_rgb(rgb_float: tuple[float, float, float]) -> tuple[int, int, int]:
     """
-    Converts a float color to an RGB color.
+    Convert a float color to an RGB color.
     """
-    rgb = []
-    for color in rgb_float:
-        rgb.append(int(round(color*255, 0)))
-    return tuple(rgb)
+    return tuple(int(round(color * 255)) for color in rgb_float)
 
 def rgb_to_decimal(rgb: tuple[int, int, int]) -> int:
     """
-    Converts an RGB color to a decimal color in BGR format.
+    Convert an RGB color to a decimal color in BGR format.
     """
     return rgb[2] * 65536 + rgb[1] * 256 + rgb[0]
 
 def decimal_to_rgb(decimal: int) -> tuple[int, int, int]:
     """
-    Converts a decimal color in BGR format to an RGB color.
+    Convert a decimal color in BGR format to an RGB color.
     """
     blue = decimal / 65536
     green = (decimal - blue * 65536) / 256
@@ -118,33 +112,29 @@ def decimal_to_rgb(decimal: int) -> tuple[int, int, int]:
 
 def float_to_decimal(rgb_float: tuple[float, float, float]) -> int:
     """
-    Converts a float color to a decimal color in BGR format.
+    Convert a float color to a decimal color in BGR format.
     """
     return rgb_to_decimal(float_to_rgb(rgb_float))
 
 def decimal_to_float(decimal: int) -> tuple[float, float, float]:
     """
-    Converts a decimal color in BGR format to a float color.
+    Convert a decimal color in BGR format to a float color.
     """
     return rgb_to_float(decimal_to_rgb(decimal))
 
 def create_wave_effect(colors: list[tuple[int]], line_orientation: Literal["VERTICAL", "HORIZONTAL"], mode: Literal["ALTERNATING", "CLUSTER"]) -> list[list[tuple[float, float, float]]]:
     """
-    Creates a matrix of float colors to be used for a wave effect using the supplied colors in RGB format.
+    Create a matrix of float colors to be used for a wave effect using the supplied colors in RGB format.
 
-    :param colors: A list of RGB colors to be used to create the effect.
-    :type colors: list
+    :param colors: List of RGB colors to be used to create the effect.
 
     :param line_orientation: `VERTICAL`: Max 22 colors.
     `HORIZONTAL`: Max 6 colors.
-    :type line_orientation: str
 
     :param mode: `ALTERNATING`: Colors repeat seperated. (Looks best when the number of colors is a factor of the max colors.)
     `CLUSTER`: Colors repeat clumped with themselves.
-    :type mode: str
 
     :return: The generated wave effect.
-    :rtype: list
     """
     if len(colors) < 2:
         raise ValueError(f"Expected `colors` to have a length no less than 2, got {len(colors)}")
@@ -198,13 +188,11 @@ def create_wave_effect(colors: list[tuple[int]], line_orientation: Literal["VERT
 
 def create_explosion_effect(color: tuple[int]) -> list[list[tuple[float, float, float]]]:
     """
-    Creates a matrix of float colors to be used for an explosion effect using the supplied color in RGB format.
+    Create a matrix of float colors to be used for an explosion effect using the supplied color in RGB format.
 
     :param color: The RGB color to be used for the effect.
-    :type color: tuple
 
     :return: The generated explosion effect.
-    :rtype: list
     """
     float_color = rgb_to_float(color)
 
