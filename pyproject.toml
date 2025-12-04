@@ -1,7 +1,7 @@
 [project]
 name = "cs2-chroma"
 license = "MIT"
-version = "0.1.0"
+version = "0.1.1"
 requires-python = ">=3.13"
 dependencies = [
     "pydantic>=2.12.5",
