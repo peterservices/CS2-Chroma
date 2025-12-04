@@ -53,7 +53,7 @@ class Map(BaseModel):
 
 class Round(BaseModel):
     phase: str = ""
-    win_team: str | None = None
+    win_team: Literal["CT", "T"] | None = None
     bomb: str | None = None
     bomb_plant_time: float | None = None
 
@@ -132,11 +132,19 @@ def create_wave_effect(colors: list[tuple[int]], line_orientation: Literal["VERT
     """
     Creates a matrix of float colors to be used for a wave effect using the supplied colors in RGB format.
 
-    `VERTICAL`: Max 22 colors.
-    `HORIZONTAL`: Max 6 colors.
+    :param colors: A list of RGB colors to be used to create the effect.
+    :type colors: list
 
-    `ALTERNATING`: Colors repeat seperated. (Looks best when the number of colors is a factor of the max colors.)
+    :param line_orientation: `VERTICAL`: Max 22 colors.
+    `HORIZONTAL`: Max 6 colors.
+    :type line_orientation: str
+
+    :param mode: `ALTERNATING`: Colors repeat seperated. (Looks best when the number of colors is a factor of the max colors.)
     `CLUSTER`: Colors repeat clumped with themselves.
+    :type mode: str
+
+    :return: The generated wave effect.
+    :rtype: list
     """
     if len(colors) < 2:
         raise ValueError(f"Expected `colors` to have a length no less than 2, got {len(colors)}")
@@ -191,6 +199,12 @@ def create_wave_effect(colors: list[tuple[int]], line_orientation: Literal["VERT
 def create_explosion_effect(color: tuple[int]) -> list[list[tuple[float, float, float]]]:
     """
     Creates a matrix of float colors to be used for an explosion effect using the supplied color in RGB format.
+
+    :param color: The RGB color to be used for the effect.
+    :type color: tuple
+
+    :return: The generated explosion effect.
+    :rtype: list
     """
     float_color = rgb_to_float(color)
 

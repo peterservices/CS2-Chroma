@@ -10,7 +10,7 @@ from utils import Configuration
 logging.getLogger("http").setLevel("WARNING")
 
 def setup():
-    # Attempt to load the config from a file
+    # Attempt to load the config from the disk
     if not os.path.exists("config.json"):
         config = Configuration()
         to_write = config.model_dump_json(indent=5)
@@ -25,7 +25,7 @@ def setup():
         with open("config.json", "w") as file:
             file.write(to_write)
 
-    # Check if a game state integration file already exists in the CS2 game directory
+    # Get Steam path from registry
     try:
         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam")
         steam_path, value_type = winreg.QueryValueEx(key, "SteamPath")
@@ -38,6 +38,7 @@ def setup():
     if not os.path.exists(steam_path):
         raise FileNotFoundError(f"Expected Steam directory located at {steam_path}, but directory does not exist.")
 
+    # Parse game location file to find CS2's path
     library_folders = os.path.join(steam_path, r"steamapps\libraryfolders.vdf")
 
     installed_path: str
@@ -46,6 +47,7 @@ def setup():
         while True:
             line = file.readline()
             if line == "":
+                # We have reached the end of the file
                 raise KeyError("Could not find CS2 game folder installed in Steam.")
             if "\"path\"" in line:
                 path = line.replace("\"path\"", "")
@@ -63,17 +65,20 @@ def setup():
     if not os.path.exists(config_path):
         raise KeyError("Could not find CS2 game folder installed in Steam.")
 
+    # Check if a game state integration file already exists in the CS2 game directory
     copy_config = False
     config_file = os.path.join(config_path, "gamestate_integration_chroma.cfg")
     if os.path.exists(config_file):
+        # Compare the file contents to check for changes
         with open(config_file) as file:
-            existing_title = file.readline()
+            existing_file = file.read()
         with open("gamestate_integration_razerchroma.cfg") as file:
-            if existing_title != file.readline():
+            if existing_file != file.read():
                 copy_config = True
     else:
         copy_config = True
 
+    # Copy the new or updated config into the CS2 config folder
     if copy_config:
         if os.path.exists(config_file):
             os.remove(config_file)
@@ -81,17 +86,16 @@ def setup():
             shutil.copyfile("gamestate_integration_razerchroma.cfg", config_file)
         except PermissionError as e:
             raise PermissionError("User does not have permission to copy to CS2 game folder. Try running as administrator.", e)
-        print("Copied gamestate integration config into the CS2 game folder. You may have to restart the game for changes to be applied.")
+        print("Copied gamestate integration config into the CS2 game folder. You may need to restart the game for changes to be applied.")
 
     gamestate_integration_server = GamestateServer(("127.0.0.1", 3003), GamestateRequestHandler, config)
-
     try:
         gamestate_integration_server.serve_forever()
     except KeyboardInterrupt:
         if gamestate_integration_server.chroma_control.connected_event.is_set():
             gamestate_integration_server.chroma_control.disconnect()
     except SystemExit:
-        pass # Exception caused by shutting down when game is closed
+        pass # Exception raised when shutting down when game is closed
 
 if __name__ == "__main__":
     setup()
