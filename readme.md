@@ -7,9 +7,9 @@ A configurable Razer Chroma integration that brings the heat of the game to your
 
 ### **Quickstart Guide**
 
-* Clone or download the repository and place the folder in a convenient location (Copy the path for later)
-* Install [**Razer Synapse 4 BETA**](https://www.razer.com/synapse-4) (Non-BETA will not work)
-* Install [**uv**](https://docs.astral.sh/uv/getting-started/installation/#__tabbed_1_2)
+* Clone or [download the source](https://github.com/peterservices/CS2-Chroma/archive/refs/heads/main.zip) and place the uncompressed folder in a convenient location
+* Install [Razer Synapse 4 BETA](https://www.razer.com/synapse-4) (Non-BETA will not work)
+* Install [uv](https://docs.astral.sh/uv/getting-started/installation/#__tabbed_1_2)
 * Add `"C:\\PATH\\TO\\PROJECT\\start.bat" %command%` to Counter-Strike 2's launch options (Replace the path with your own)
 
 ### **Features**
