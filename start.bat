@@ -7,6 +7,7 @@ IF %ERRORLEVEL% NEQ 0 (
     exit /b
 )
 
+uv python install 3.13
 uv sync --python 3.13
 
 :: Execute the command(s) passed (Should be the game executable along with any arguments)
