@@ -2,11 +2,14 @@
 
 A configurable Razer Chroma integration that brings the heat of the game to your keyboard with color effects.
 
+> [!NOTE]
+> This script is *only* compatible with Windows, and will not work on MacOS.
+
 ### **Quickstart Guide**
 
 * Clone or download the repository and place the folder in a convenient location (Copy the path for later)
 * Install [**Razer Synapse 4 BETA**](https://www.razer.com/synapse-4) (Non-BETA will not work)
-* Install [**uv**](https://docs.astral.sh/uv)
+* Install [**uv**](https://docs.astral.sh/uv/getting-started/installation/#__tabbed_1_2)
 * Add `"C:\\PATH\\TO\\PROJECT\\start.bat" %command%` to Counter-Strike 2's launch options (Replace the path with your own)
 
 ### **Features**
@@ -19,7 +22,7 @@ A configurable Razer Chroma integration that brings the heat of the game to your
   * Flash-banged
   * Dying
   * Bomb exploding
-  * Winning/losing the game
+  * Winning/losing/tying the game
 * Active key indicators
   * Movement keys
   * Inventory slots
@@ -29,5 +32,5 @@ A configurable Razer Chroma integration that brings the heat of the game to your
 
 All features are toggle-able via a JSON file generated when you first run the script.
 
-> [!NOTE]
-> CS2-Chroma is not affiliated or endorsed in any way by Razer or its subsidiaries.
+> [!IMPORTANT]
+> CS2-Chroma is not affiliated or endorsed in any way by Razer, Valve, or any of their subsidaries
