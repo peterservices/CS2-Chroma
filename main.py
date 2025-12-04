@@ -27,9 +27,8 @@ def setup():
 
     # Get Steam path from registry
     try:
-        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam")
-        steam_path, value_type = winreg.QueryValueEx(key, "SteamPath")
-        key.Close()
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam") as key:
+            steam_path, value_type = winreg.QueryValueEx(key, "SteamPath")
     except OSError as e:
         raise OSError("Steam could not be found in the Windows registry.", e)
 
