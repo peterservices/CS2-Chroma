@@ -7,7 +7,9 @@ import winreg
 from gsi_manager import GamestateRequestHandler, GamestateServer
 from utils import Configuration
 
-logging.getLogger("http").setLevel("WARNING")
+logging.basicConfig(level=logging.INFO, format="[CHROMA] [%(levelname)s] %(message)s")
+
+logger = logging.getLogger(__name__)
 
 def setup():
     # Attempt to load the config from the disk
@@ -85,7 +87,7 @@ def setup():
             shutil.copyfile("gamestate_integration_razerchroma.cfg", config_file)
         except PermissionError as e:
             raise PermissionError("User does not have permission to copy to CS2 game folder. Try running as administrator.", e)
-        print("Copied gamestate integration config into the CS2 game folder. You may need to restart the game for changes to be applied.")
+        logger.info("Copied gamestate integration config into the CS2 game folder. You may need to restart the game for changes to be applied.")
 
     gamestate_integration_server = GamestateServer(("127.0.0.1", 3003), GamestateRequestHandler, config)
     try:
