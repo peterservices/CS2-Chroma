@@ -16,4 +16,4 @@ IF NOT "%~1" == "" (
     start "" %*
 )
 
-uv run main.py
+uv run src/main.py
