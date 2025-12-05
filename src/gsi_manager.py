@@ -94,143 +94,144 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
         else:
             gamestate_manager.round = None
 
-        if "player" in payload:
+        if "player" in payload and (payload["player"]["steamid"] == gamestate_manager.steam_id or self.server.config.show_effects_for_others):
             if gamestate_manager.player is None:
                 gamestate_manager.player = Player()
-            if payload["player"]["steamid"] == gamestate_manager.steam_id or self.server.config.show_effects_for_others:
-                _payload = payload["player"]
-                gamestate_manager.player.steam_id = _payload["steamid"]
-                gamestate_manager.player.name = _payload["name"]
-                gamestate_manager.player.team = _payload.get("team")
+            _payload = payload["player"]
+            gamestate_manager.player.steam_id = _payload["steamid"]
+            gamestate_manager.player.name = _payload["name"]
+            gamestate_manager.player.team = _payload.get("team")
 
-                if "state" in payload["player"]:
-                    _payload = payload["player"]["state"]
+            if "state" in payload["player"]:
+                _payload = payload["player"]["state"]
 
-                    if gamestate_manager.player.state.health != _payload["health"]:
-                        if self.server.config.effects.death_effect:
-                            if _payload["health"] == 0:
-                                death_color = rgb_to_float((255, 0, 0))
-                                death_effect = ChromaEffect(
-                                    type="STATIC",
-                                    method="FILL",
-                                    colors=[[death_color for _ in range(22)] for _ in range(6)],
-                                    id="death",
-                                )
-                                chroma_control.state.add_effect(death_effect)
-                            elif _payload["health"] > gamestate_manager.player.state.health:
-                                effect = chroma_control.state.find_effect_by_id("death")
-                                if effect is not None:
-                                    chroma_control.state.remove_effect(effect)
-                        gamestate_manager.player.state.health = _payload["health"]
-
-                    gamestate_manager.player.state.armor_health = _payload["armor"]
-                    gamestate_manager.player.state.has_helmet = _payload["helmet"]
-                    gamestate_manager.player.state.money = _payload["money"]
-
-                    if gamestate_manager.player.state.round_kills != _payload["round_kills"]:
-                        if self.server.config.effects.kill_effect and _payload["round_kills"] > gamestate_manager.player.state.round_kills:
-                            effect = chroma_control.state.find_effect_by_id("kill")
-                            if effect:
+                if gamestate_manager.player.state.health != _payload["health"]:
+                    if self.server.config.effects.death_effect:
+                        if _payload["health"] == 0:
+                            death_color = rgb_to_float((255, 0, 0))
+                            death_effect = ChromaEffect(
+                                type="STATIC",
+                                method="FILL",
+                                colors=[[death_color for _ in range(22)] for _ in range(6)],
+                                id="death",
+                            )
+                            chroma_control.state.add_effect(death_effect)
+                        elif _payload["health"] > gamestate_manager.player.state.health:
+                            effect = chroma_control.state.find_effect_by_id("death")
+                            if effect is not None:
                                 chroma_control.state.remove_effect(effect)
-                            if gamestate_manager.player.team == "CT":
-                                kill_color = (93, 121, 174)
-                            else:
-                                kill_color = (222, 155, 53)
+                    gamestate_manager.player.state.health = _payload["health"]
 
-                            if _payload["round_kills"] % 5 != 0:
-                                kill_color = rgb_to_float(kill_color)
-                                kill_effect = ChromaEffect(
-                                    type="STATIC",
-                                    method="FILL",
-                                    colors=[[kill_color for _ in range(22)] for _ in range(6)],
-                                    decay_amount=20/255,
-                                    update_rate=0.1,
-                                    last_update=time.time(),
-                                    expires_after_updates=5,
-                                    id="kill",
-                                )
-                            else:
-                                kill_colors = create_explosion_effect(kill_color)
-                                kill_effect = ChromaEffect(
-                                    type="EXPLOSION",
-                                    method="FILL_NO_ZERO",
-                                    colors=kill_colors,
-                                    decay_amount=5/255,
-                                    update_rate=0.1,
-                                    last_update=time.time(),
-                                    expires_after_updates=14,
-                                    id="kill",
-                                )
-                            chroma_control.state.add_effect(kill_effect)
-                        gamestate_manager.player.state.round_kills = _payload["round_kills"]
+                gamestate_manager.player.state.armor_health = _payload["armor"]
+                gamestate_manager.player.state.has_helmet = _payload["helmet"]
+                gamestate_manager.player.state.money = _payload["money"]
 
-                    gamestate_manager.player.state.round_headshot_kills = _payload["round_killhs"]
-                    gamestate_manager.player.state.equipment_value = _payload["equip_value"]
+                if gamestate_manager.player.state.round_kills != _payload["round_kills"]:
+                    if self.server.config.effects.kill_effect and _payload["round_kills"] > gamestate_manager.player.state.round_kills:
+                        effect = chroma_control.state.find_effect_by_id("kill")
+                        if effect:
+                            chroma_control.state.remove_effect(effect)
+                        if gamestate_manager.player.team == "CT":
+                            kill_color = (93, 121, 174)
+                        else:
+                            kill_color = (222, 155, 53)
 
-                    if gamestate_manager.player.state.is_flashed != (_payload["flashed"] != 0):
-                        if self.server.config.effects.flash_effect:
-                            effect = chroma_control.state.find_effect_by_id("flash")
-                            if _payload["flashed"] != 0:
-                                if effect is not None:
-                                    chroma_control.state.remove_effect(effect)
-                                flash_color = rgb_to_float((255, 255, 255))
-                                flash_effect = ChromaEffect(
-                                    type="STATIC",
-                                    method="ADD",
-                                    colors=[[flash_color for _ in range(22)] for _ in range(6)],
-                                    id="flash",
-                                )
-                                chroma_control.state.add_effect(flash_effect)
-                            else:
-                                if effect is not None:
-                                    effect.last_update = time.time()
-                                    effect.update_rate = 0.1
-                                    effect.decay_amount = 15 / 255
-                        gamestate_manager.player.state.is_flashed = _payload["flashed"] != 0
+                        if _payload["round_kills"] % 5 != 0:
+                            kill_color = rgb_to_float(kill_color)
+                            kill_effect = ChromaEffect(
+                                type="STATIC",
+                                method="FILL",
+                                colors=[[kill_color for _ in range(22)] for _ in range(6)],
+                                decay_amount=20/255,
+                                update_rate=0.1,
+                                last_update=time.time(),
+                                expires_after_updates=5,
+                                id="kill",
+                            )
+                        else:
+                            kill_colors = create_explosion_effect(kill_color)
+                            kill_effect = ChromaEffect(
+                                type="EXPLOSION",
+                                method="FILL_NO_ZERO",
+                                colors=kill_colors,
+                                decay_amount=5/255,
+                                update_rate=0.1,
+                                last_update=time.time(),
+                                expires_after_updates=14,
+                                id="kill",
+                            )
+                        chroma_control.state.add_effect(kill_effect)
+                    gamestate_manager.player.state.round_kills = _payload["round_kills"]
 
-                    if gamestate_manager.player.state.in_smoke != (_payload["smoked"] != 0):
-                        if self.server.config.effects.smoke_effect:
-                            effect = chroma_control.state.find_effect_by_id("smoke")
-                            if _payload["smoked"] != 0:
-                                if effect is not None:
-                                    chroma_control.state.remove_effect(effect)
-                                smoke_color = rgb_to_float((100, 100, 100))
-                                smoke_effect = ChromaEffect(
-                                    type="STATIC",
-                                    method="ADD",
-                                    colors=[[smoke_color for _ in range(22)] for _ in range(6)],
-                                    id="smoke",
-                                )
-                                chroma_control.state.add_effect(smoke_effect)
-                            else:
-                                if effect is not None:
-                                    effect.last_update = time.time()
-                                    effect.update_rate = 0.05
-                                    effect.decay_amount = 25 / 255
-                        gamestate_manager.player.state.in_smoke = _payload["smoked"] != 0
+                gamestate_manager.player.state.round_headshot_kills = _payload["round_killhs"]
+                gamestate_manager.player.state.equipment_value = _payload["equip_value"]
 
-                    if gamestate_manager.player.state.is_burning != (_payload["burning"] == 255):
-                        if self.server.config.effects.burning_effect:
-                            effect = chroma_control.state.find_effect_by_id("fire")
-                            if _payload["burning"] == 255:
-                                if effect is not None:
-                                    chroma_control.state.remove_effect(effect)
-                                burn_colors = create_wave_effect(colors=[(255, 81, 0), (255, 0, 0)], line_orientation="HORIZONTAL", mode="ALTERNATING")
-                                burn_effect = ChromaEffect(
-                                    type="WAVE",
-                                    method="ADD",
-                                    direction="UP",
-                                    colors=burn_colors,
-                                    update_rate=0.2,
-                                    last_update=time.time(),
-                                    id="fire",
-                                )
-                                chroma_control.state.add_effect(burn_effect)
-                            else:
-                                if effect is not None:
-                                    effect.last_update = time.time()
-                                    effect.decay_amount = 128 / 255
-                        gamestate_manager.player.state.is_burning = _payload["burning"] == 255
+                if gamestate_manager.player.state.is_flashed != (_payload["flashed"] != 0):
+                    if self.server.config.effects.flash_effect:
+                        effect = chroma_control.state.find_effect_by_id("flash")
+                        if _payload["flashed"] != 0:
+                            if effect is not None:
+                                chroma_control.state.remove_effect(effect)
+                            flash_color = rgb_to_float((255, 255, 255))
+                            flash_effect = ChromaEffect(
+                                type="STATIC",
+                                method="ADD",
+                                colors=[[flash_color for _ in range(22)] for _ in range(6)],
+                                id="flash",
+                            )
+                            chroma_control.state.add_effect(flash_effect)
+                        else:
+                            if effect is not None:
+                                effect.last_update = time.time()
+                                effect.update_rate = 0.1
+                                effect.decay_amount = 15 / 255
+                    gamestate_manager.player.state.is_flashed = _payload["flashed"] != 0
+
+                if gamestate_manager.player.state.in_smoke != (_payload["smoked"] != 0):
+                    if self.server.config.effects.smoke_effect:
+                        effect = chroma_control.state.find_effect_by_id("smoke")
+                        if _payload["smoked"] != 0:
+                            if effect is not None:
+                                chroma_control.state.remove_effect(effect)
+                            smoke_color = rgb_to_float((100, 100, 100))
+                            smoke_effect = ChromaEffect(
+                                type="STATIC",
+                                method="ADD",
+                                colors=[[smoke_color for _ in range(22)] for _ in range(6)],
+                                id="smoke",
+                            )
+                            chroma_control.state.add_effect(smoke_effect)
+                        else:
+                            if effect is not None:
+                                effect.last_update = time.time()
+                                effect.update_rate = 0.05
+                                effect.decay_amount = 25 / 255
+                    gamestate_manager.player.state.in_smoke = _payload["smoked"] != 0
+
+                if gamestate_manager.player.state.is_burning != (_payload["burning"] == 255):
+                    if self.server.config.effects.burning_effect:
+                        effect = chroma_control.state.find_effect_by_id("fire")
+                        if _payload["burning"] == 255:
+                            if effect is not None:
+                                chroma_control.state.remove_effect(effect)
+                            burn_colors = create_wave_effect(colors=[(255, 81, 0), (255, 0, 0)], line_orientation="HORIZONTAL", mode="ALTERNATING")
+                            burn_effect = ChromaEffect(
+                                type="WAVE",
+                                method="ADD",
+                                direction="UP",
+                                colors=burn_colors,
+                                update_rate=0.2,
+                                last_update=time.time(),
+                                id="fire",
+                            )
+                            chroma_control.state.add_effect(burn_effect)
+                        else:
+                            if effect is not None:
+                                effect.last_update = time.time()
+                                effect.decay_amount = 128 / 255
+                    gamestate_manager.player.state.is_burning = _payload["burning"] == 255
+            else:
+                chroma_control.state.remove_player_effects()
 
             # Weapons
             if "weapons" in payload["player"]:
@@ -280,6 +281,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                 gamestate_manager.player.statistics.score = _payload["score"]
         else:
             gamestate_manager.player = None
+            chroma_control.state.remove_player_effects()
 
 class GamestateServer(http.server.HTTPServer):
     def __init__(self, address: tuple, RequestHandler: type, config: Configuration):

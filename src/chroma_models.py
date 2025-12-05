@@ -98,4 +98,14 @@ class ChromaState(BaseModel):
             with self.lock:
                 self.effects.remove(effect)
 
+    def remove_player_effects(self):
+        """
+        Remove in-game player specific effects from the effects list.
+        """
+        effect_ids: list[str] = ["death", "kill", "flash", "smoke", "fire", "shoot"]
+        for id in effect_ids:
+            effect = self.find_effect_by_id(id)
+            if effect is not None:
+                self.remove_effect(effect)
+
 # By @peterservices
