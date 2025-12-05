@@ -1,12 +1,16 @@
 # IMPORTS
 import http.server
 import json
+import logging
 import sys
 import threading
 import time
 from typing import Any
 
-from chroma_controls import ChromaControl, ChromaEffect
+from chroma_manager import ChromaControl
+from chroma_models import ChromaEffect
+from color_conversions import rgb_to_float
+from effects import create_explosion_effect, create_wave_effect
 from utils import (
     Configuration,
     GameState,
@@ -14,11 +18,9 @@ from utils import (
     Player,
     Round,
     Weapon,
-    create_explosion_effect,
-    create_wave_effect,
-    rgb_to_float,
 )
 
+logger = logging.getLogger(__name__)
 
 class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
     def do_POST(self) -> None:
@@ -304,12 +306,12 @@ class GamestateServer(http.server.HTTPServer):
             # Detect game close
             if time.time() - self.gamestate_manager.last_heartbeat > 6: # Allow an extra second of missed heartbeats to be sure the game is actually closed
                 if self.chroma_control.connected_event.is_set():
-                    print("[CHROMA] Lost connection to game")
+                    logger.info("Lost connection to game")
                     self.chroma_control.disconnect()
                     if self.config.close_after_game_close:
                         sys.exit()
             elif not self.chroma_control.connected_event.is_set():
-                print("[CHROMA] Connected to game")
+                logger.info("Connected to game")
                 self.chroma_control.connect()
 
             if self.chroma_control.connected_event.is_set():
@@ -459,4 +461,5 @@ class GamestateServer(http.server.HTTPServer):
                                         effect.colors[1][2] = key_color # 1
                     elif effect is not None:
                         self.chroma_control.state.remove_effect(effect)
+
 # By @peterservices
