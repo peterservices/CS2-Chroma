@@ -98,6 +98,9 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
             if gamestate_manager.player is None:
                 gamestate_manager.player = Player()
             _payload = payload["player"]
+
+            player_changed = gamestate_manager.player.steam_id != _payload["steamid"]
+
             gamestate_manager.player.steam_id = _payload["steamid"]
             gamestate_manager.player.name = _payload["name"]
             gamestate_manager.player.team = _payload.get("team")
@@ -127,7 +130,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                 gamestate_manager.player.state.money = _payload["money"]
 
                 if gamestate_manager.player.state.round_kills != _payload["round_kills"]:
-                    if self.server.config.effects.kill_effect and _payload["round_kills"] > gamestate_manager.player.state.round_kills:
+                    if not player_changed and self.server.config.effects.kill_effect and _payload["round_kills"] > gamestate_manager.player.state.round_kills:
                         effect = chroma_control.state.find_effect_by_id("kill")
                         if effect:
                             chroma_control.state.remove_effect(effect)
