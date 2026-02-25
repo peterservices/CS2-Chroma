@@ -4,6 +4,7 @@ cd /D "%~dp0" & :: Enter the project directory
 where uv >nul 2>nul & :: Check if uv is installed
 IF %ERRORLEVEL% NEQ 0 (
     echo Please install `uv` to continue automatic CS2 Chroma launch. https://docs.astral.sh/uv/
+    pause
     exit /b
 )
 
