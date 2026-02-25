@@ -87,7 +87,7 @@ class ChromaControl(requests.Session):
         with contextlib.suppress(requests.exceptions.Timeout, requests.exceptions.ConnectionError):
             self.request("DELETE", self.url, timeout=0.00001)
 
-        logger.info(f"[CHROMA] Disconnected from {self.url}")
+        logger.info(f"Disconnected from {self.url}")
 
     def update_effects(self) -> None:
         """
