@@ -437,6 +437,8 @@ class GamestateServer(http.server.HTTPServer):
                     if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None:
                         colors = [[(0.0, 0.0, 0.0) for _ in range(22)] for _ in range(6)]
                         key_color = rgb_to_float((65, 58, 39))
+                        key_color_low = rgb_to_float((155, 148, 39))
+                        key_color_empty = rgb_to_float((155, 58, 39))
                         if effect is None:
                             effect = ChromaEffect(
                                 type="STATIC",
@@ -450,7 +452,7 @@ class GamestateServer(http.server.HTTPServer):
                         for _, v in self.gamestate_manager.player.state.weapons.items():
                             match v.type:
                                 case "Pistol":
-                                    effect.colors[1][3] = key_color # 2
+                                    effect.colors[1][3] = key_color_empty if v.ammo_clip == 0 else key_color_low if v.ammo_clip < v.ammo_clip_max / 3 else key_color # 2
                                 case "Knife":
                                     effect.colors[1][4] = key_color # 3
                                 case "Grenade":
@@ -461,9 +463,9 @@ class GamestateServer(http.server.HTTPServer):
                                     effect.colors[1][6] = key_color # 5
                                 case _:
                                     if v.name == "weapon_taser":
-                                        effect.colors[1][4] = key_color # 3
-                                    else:
-                                        effect.colors[1][2] = key_color # 1
+                                        effect.colors[1][4] = key_color_empty if v.ammo_clip == 0 else key_color # 3
+                                    else: # The primary weapon can have many different types
+                                        effect.colors[1][2] = key_color_empty if v.ammo_clip == 0 else key_color_low if v.ammo_clip < v.ammo_clip_max / 3 else key_color # 1
                     elif effect is not None:
                         self.chroma_control.state.remove_effect(effect)
 
