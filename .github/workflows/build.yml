@@ -1,0 +1,44 @@
+name: Build
+
+on:
+  release:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      GAMESTATE_INTEGRATION_FILE: 'gamestate_integration_razerchroma.cfg'
+      MAIN_PY_FILE: 'src/main.py'
+      PYINSTALLER_ARGS: '--name cs2_chroma'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: 3.13.x
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
+
+    - name: Install the project
+      run: uv sync --all-extras --dev
+
+    - name: Build executable
+      run: uv run pyinstaller ${{ env.PYINSTALLER_ARGS }} ${{ env.MAIN_PY_FILE }}
+    
+    - name: Add extra files
+      run: |
+        cp ${{ env.GAMESTATE_INTEGRATION_FILE }} dist/
+        cp start.bat dist/
+
+    - name: Create Artifact (Windows)
+      uses: actions/upload-artifact@v7
+      with:
+        name: windows-executable-${{ github.event.release.tag_name }}
+        path: dist/
