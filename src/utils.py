@@ -76,7 +76,7 @@ class EffectConfiguration(BaseModel):
 
 class Configuration(BaseModel):
     show_effects_for_others: bool = True
-    close_after_game_close: bool = False
+    close_after_game_close: bool = True
     effects: EffectConfiguration = EffectConfiguration()
     defusal_indicator: bool = False
     movement_key_indicators: bool = True
