@@ -8,6 +8,11 @@ dependencies = [
     "requests>=2.32.5",
 ]
 
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.19.0",
+]
+
 [tool.ruff.lint]
 extend-select = [
     "F",
