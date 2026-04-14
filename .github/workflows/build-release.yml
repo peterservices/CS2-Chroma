@@ -51,5 +51,6 @@ jobs:
           file: cs2_chroma_windows.zip
           asset_name: cs2_chroma_windows_${{ github.ref_name }}.zip
           tag: ${{ github.ref }}
+          draft: true
           overwrite: true
         
