@@ -1,10 +1,13 @@
 name: Ruff
+
 on: [ push, pull_request ]
+
 permissions:
   contents: read
+
 jobs:
   ruff:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/ruff-action@v3
+      - uses: actions/checkout@v7
+      - uses: astral-sh/ruff-action@v4
