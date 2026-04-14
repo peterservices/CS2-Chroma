@@ -3,14 +3,14 @@
 A configurable Razer Chroma integration that brings the heat of the game to your keyboard with color effects.
 
 > [!NOTE]
-> This script is *only* compatible with Windows, and will not work on MacOS.
+> This script is *only* compatible with Windows.
 
 ### **Quickstart Guide**
 
-* Clone or [download the source](https://github.com/peterservices/CS2-Chroma/archive/refs/heads/main.zip) and place the uncompressed folder in a convenient location
 * Install [Razer Synapse 4 BETA](https://www.razer.com/synapse-4) (Non-BETA will not work)
-* Install [uv](https://docs.astral.sh/uv/getting-started/installation/#__tabbed_1_2)
+* Download and unzip the [latest release](https://github.com/peterservices/CS2-Chroma/releases/latest).
 * Add `"C:\\PATH\\TO\\PROJECT\\start.bat" %command%` to Counter-Strike 2's launch options (Replace the path with your own)
+* Windows may warn you about start.bat and/or cs2_chroma.exe because they are not signed, but they are perfectly safe. (Upload to VirusTotal if you want to check)
 
 ### **Features**
 
