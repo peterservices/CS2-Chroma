@@ -44,7 +44,7 @@ jobs:
           cp start.bat dist/cs2_chroma
 
       - name: Zip directory
-        run: 7z a cs2_chroma_windows.zip dist/cs2_chroma
+        run: 7z a cs2_chroma_windows.zip dist/cs2_chroma/*
 
       - name: Upload zip to release
         uses: svenstaro/upload-release-action@v2
