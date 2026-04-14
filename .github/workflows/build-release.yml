@@ -1,0 +1,55 @@
+name: Build Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      GAMESTATE_INTEGRATION_FILE: 'gamestate_integration_razerchroma.cfg'
+      MAIN_PY_FILE: 'src/main.py'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.13.x
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install the project
+        run: uv sync --all-extras --dev
+
+      - name: Build executable directory
+        run: uv run pyinstaller --name cs2_chroma ${{ env.MAIN_PY_FILE }}
+
+      - name: Add extra files
+        run: |
+          cp ${{ env.GAMESTATE_INTEGRATION_FILE }} dist/cs2_chroma
+          cp start.bat dist/cs2_chroma
+
+      - name: Zip directory
+        run: 7z cs2_chroma_windows.zip dist/cs2_chroma
+      
+      - name: Upload zip to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: cs2_chroma_windows.zip
+          asset_name: cs2_chroma_windows_${{ github.ref_name }}.zip
+          tag: ${{ github.ref }}
+          overwrite: true
+        
