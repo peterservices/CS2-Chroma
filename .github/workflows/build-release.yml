@@ -51,8 +51,8 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: cs2_chroma_windows.zip
-          asset_name: dist/cs2_chroma/cs2_chroma_windows_${{ github.ref_name }}.zip
+          file: dist/cs2_chroma/cs2_chroma_windows.zip
+          asset_name: cs2_chroma_windows_${{ github.ref_name }}.zip
           tag: ${{ github.ref }}
           draft: true
           overwrite: true
