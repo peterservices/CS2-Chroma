@@ -5,7 +5,7 @@ from chroma_models import ChromaEffect
 from color_conversions import rgb_to_float
 
 
-def create_wave_effect(colors: list[tuple[int]], line_orientation: Literal["VERTICAL", "HORIZONTAL"], mode: Literal["ALTERNATING", "CLUSTER"]) -> list[list[tuple[float, float, float]]]:
+def create_wave_effect(colors: list[tuple[int, int, int]], line_orientation: Literal["VERTICAL", "HORIZONTAL"], mode: Literal["ALTERNATING", "CLUSTER"]) -> list[list[tuple[float, float, float]]]:
     """
     Create a matrix of float colors to be used for a wave effect using the supplied colors in RGB format.
 
@@ -69,7 +69,7 @@ def create_wave_effect(colors: list[tuple[int]], line_orientation: Literal["VERT
                 pattern[i] = [pattern[i][0] for _ in range(22)]
     return pattern
 
-def create_explosion_effect(color: tuple[int]) -> list[list[tuple[float, float, float]]]:
+def create_explosion_effect(color: tuple[int, int, int]) -> list[list[tuple[float, float, float]]]:
     """
     Create a matrix of float colors to be used for an explosion effect using the supplied color in RGB format.
 
