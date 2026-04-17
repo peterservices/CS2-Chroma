@@ -11,6 +11,7 @@ from chroma_manager import ChromaControl
 from chroma_models import ChromaEffect
 from color_conversions import rgb_to_float
 from effects import create_explosion_effect, create_wave_effect
+from media_manager import start_playback, stop_playback
 from utils import (
     Configuration,
     GameState,
@@ -18,6 +19,7 @@ from utils import (
     Player,
     Round,
     Weapon,
+    async_to_sync,
 )
 
 logger = logging.getLogger(__name__)
@@ -104,8 +106,18 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
             if player_changed: # Store a copy of the player's object for win/loss effects
                 if _payload["steamid"] == gamestate_manager.steam_id:
                     gamestate_manager.local_player = gamestate_manager.player
+                    if self.server.config.pause_system_media_while_alive:
+                        try:
+                            async_to_sync(stop_playback())
+                        except Exception:
+                            logger.exception("Failed to stop media.")
                 elif gamestate_manager.player.steam_id == gamestate_manager.steam_id:
                     gamestate_manager.local_player = gamestate_manager.local_player.model_copy(update={"state": None}, deep=True)
+                    if self.server.config.pause_system_media_while_alive:
+                        try:
+                            async_to_sync(start_playback())
+                        except Exception:
+                            logger.exception("Failed to start media.")
 
             gamestate_manager.player.steam_id = _payload["steamid"]
             gamestate_manager.player.name = _payload["name"]
@@ -241,6 +253,10 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                     gamestate_manager.player.state.is_burning = _payload["burning"] == 255
             else:
                 chroma_control.state.remove_player_effects()
+                try:
+                    async_to_sync(start_playback())
+                except Exception:
+                    logger.exception("Failed to start media.")
 
             # Weapons
             if "weapons" in payload["player"]:
@@ -288,7 +304,13 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                 gamestate_manager.player.statistics.deaths = _payload["deaths"]
                 gamestate_manager.player.statistics.mvps = _payload["mvps"]
                 gamestate_manager.player.statistics.score = _payload["score"]
-        else:
+        elif gamestate_manager.player is not None:
+            if self.server.config.pause_system_media_while_alive and gamestate_manager.player.steam_id == gamestate_manager.steam_id:
+                try:
+                    async_to_sync(start_playback())
+                except Exception:
+                    logger.exception("Failed to start media.")
+
             gamestate_manager.player = None
             chroma_control.state.remove_player_effects()
 

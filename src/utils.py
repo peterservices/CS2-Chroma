@@ -1,4 +1,6 @@
 # IMPORTS
+import asyncio
+from collections.abc import Coroutine
 from typing import Literal
 
 from pydantic import BaseModel
@@ -78,10 +80,19 @@ class EffectConfiguration(BaseModel):
 class Configuration(BaseModel):
     show_effects_for_others: bool = True
     close_after_game_close: bool = True
+    pause_system_media_while_alive: bool = False
     effects: EffectConfiguration = EffectConfiguration()
     defusal_indicator: bool = False
     movement_key_indicators: bool = True
     inventory_key_indicators: bool = True
     interaction_key_indicators: bool = False
+
+def async_to_sync(coro: Coroutine):
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+
+    return asyncio.run_coroutine_threadsafe(coro, loop).result()
 
 # By @peterservices
