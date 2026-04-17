@@ -26,9 +26,10 @@ A configurable Razer Chroma integration that brings the heat of the game to your
 * Active key indicators
   * Movement keys
   * Inventory slots
-  * Other interaction controls
+  * Other interaction controls (disabled by default)
 * Helpful indicators
-  * Bomb defuse indicator
+  * Bomb defuse indicator (disabled by default)
+* Pause system media when alive (disabled by default)
 
 All features are toggle-able via a JSON file generated when you first run the script.
 
