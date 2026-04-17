@@ -253,10 +253,11 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                     gamestate_manager.player.state.is_burning = _payload["burning"] == 255
             else:
                 chroma_control.state.remove_player_effects()
-                try:
-                    async_to_sync(start_playback())
-                except Exception:
-                    logger.exception("Failed to start media.")
+                if self.server.config.pause_system_media_while_alive:
+                    try:
+                        async_to_sync(start_playback())
+                    except Exception:
+                        logger.exception("Failed to start media.")
 
             # Weapons
             if "weapons" in payload["player"]:
