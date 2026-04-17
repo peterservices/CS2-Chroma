@@ -61,6 +61,7 @@ class GameState(BaseModel):
     map: Map | None = None
     round: Round | None = None
     player: Player | None = None
+    local_player: Player | None = None
     steam_id: str = ""
     last_heartbeat: float = 0
 

@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         length = int(self.headers["Content-Length"])
-        body: str = self.rfile.read(length).decode("utf-8")
-        body: dict = json.loads(body)
+        body_str: str = self.rfile.read(length).decode("utf-8")
+        body: dict = json.loads(body_str)
 
         self.parse_payload(body)
 
@@ -100,6 +100,12 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
             _payload = payload["player"]
 
             player_changed = gamestate_manager.player.steam_id != _payload["steamid"]
+
+            if player_changed: # Store a copy of the player's object for win/loss effects
+                if _payload["steamid"] == gamestate_manager.steam_id:
+                    gamestate_manager.local_player = gamestate_manager.player
+                elif gamestate_manager.player.steam_id == gamestate_manager.steam_id:
+                    gamestate_manager.local_player = gamestate_manager.local_player.model_copy(update={"state": None}, deep=True)
 
             gamestate_manager.player.steam_id = _payload["steamid"]
             gamestate_manager.player.name = _payload["name"]
@@ -349,9 +355,9 @@ class GamestateServer(http.server.HTTPServer):
                     effect = self.chroma_control.state.find_effect_by_id("result")
                     if self.gamestate_manager.map is not None and self.gamestate_manager.map.phase == "gameover":
                         if effect is None:
-                            if self.gamestate_manager.player and ((self.gamestate_manager.player.team == "CT" and self.gamestate_manager.map.ct_team.score > self.gamestate_manager.map.t_team.score) or (self.gamestate_manager.player.team == "T" and self.gamestate_manager.map.ct_team.score < self.gamestate_manager.map.t_team.score)):
+                            if self.gamestate_manager.local_player and ((self.gamestate_manager.local_player.team == "CT" and self.gamestate_manager.map.ct_team.score > self.gamestate_manager.map.t_team.score) or (self.gamestate_manager.local_player.team == "T" and self.gamestate_manager.map.ct_team.score < self.gamestate_manager.map.t_team.score)):
                                 result_colors = create_wave_effect(colors=[(0, 255, 0), (105, 246, 104), (31, 201, 31)], line_orientation="VERTICAL", mode="CLUSTER")
-                            elif self.gamestate_manager.player and self.gamestate_manager.map.ct_team.score != self.gamestate_manager.map.t_team.score:
+                            elif self.gamestate_manager.local_player and self.gamestate_manager.map.ct_team.score != self.gamestate_manager.map.t_team.score:
                                 result_colors = create_wave_effect(colors=[(255, 0, 0), (246, 105, 104), (201, 31, 31)], line_orientation="VERTICAL", mode="CLUSTER")
                             else:
                                 result_colors = create_wave_effect(colors=[(150, 150, 150), (205, 205, 205), (90, 90, 90)], line_orientation="VERTICAL", mode="CLUSTER")
