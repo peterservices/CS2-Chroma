@@ -68,7 +68,9 @@ def setup():
 
     # Check if a game state integration file already exists in the CS2 game directory
     copy_config = False
-    config_file = os.path.join(config_path, "gamestate_integration_chroma.cfg")
+    config_file = os.path.join(config_path, "gamestate_integration_razerchroma.cfg")
+    if not os.path.exists("gamestate_integration_razerchroma.cfg"):
+        raise FileNotFoundError("gamestate_integration_razerchroma.cfg was not found in cs2_chroma's directory.")
     if os.path.exists(config_file):
         # Compare the file contents to check for changes
         with open(config_file) as file:
