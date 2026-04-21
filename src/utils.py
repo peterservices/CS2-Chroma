@@ -38,7 +38,7 @@ class Player(BaseModel):
     steam_id: str = ""
     name: str = ""
     team: Literal["CT", "T"] | None = None
-    state: PlayerState = PlayerState()
+    state: PlayerState | None = None
     statistics: PlayerStatistics = PlayerStatistics()
 
 class Team(BaseModel):
