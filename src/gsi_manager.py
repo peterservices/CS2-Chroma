@@ -17,6 +17,7 @@ from utils import (
     GameState,
     Map,
     Player,
+    PlayerState,
     Round,
     Weapon,
     async_to_sync,
@@ -106,7 +107,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
             if player_changed: # Store a copy of the player's object for win/loss effects
                 if _payload["steamid"] == gamestate_manager.steam_id:
                     gamestate_manager.local_player = gamestate_manager.player
-                    if self.server.config.pause_system_media_while_alive:
+                    if self.server.config.pause_system_media_while_alive and "state" in payload["player"]:
                         try:
                             async_to_sync(stop_playback())
                         except Exception:
@@ -125,6 +126,9 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
 
             if "state" in payload["player"]:
                 _payload = payload["player"]["state"]
+
+                if gamestate_manager.player.state is None:
+                    gamestate_manager.player.state = PlayerState()
 
                 if gamestate_manager.player.state.health != _payload["health"]:
                     if self.server.config.effects.death_effect:
@@ -251,8 +255,9 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                                 effect.last_update = time.time()
                                 effect.decay_amount = 128 / 255
                     gamestate_manager.player.state.is_burning = _payload["burning"] == 255
-            else:
+            elif gamestate_manager.player.state is not None:
                 chroma_control.state.remove_player_effects()
+                gamestate_manager.player.state = None
                 if self.server.config.pause_system_media_while_alive:
                     try:
                         async_to_sync(start_playback())
@@ -260,7 +265,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                         logger.exception("Failed to start media.")
 
             # Weapons
-            if "weapons" in payload["player"]:
+            if "weapons" in payload["player"] and gamestate_manager.player.state is not None:
                 _payload: dict[str, dict[str, str | int]] = payload["player"]["weapons"]
                 weapons_dict = gamestate_manager.player.state.weapons
                 for k, v in _payload.items():
@@ -463,7 +468,7 @@ class GamestateServer(http.server.HTTPServer):
                 # Update inventory key indicators depending on inventory content
                 if self.config.inventory_key_indicators:
                     effect = self.chroma_control.state.find_effect_by_id("inventory_key_indicator")
-                    if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None:
+                    if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None and self.gamestate_manager.player.state is not None:
                         colors = [[(0.0, 0.0, 0.0) for _ in range(22)] for _ in range(6)]
                         key_color = rgb_to_float((65, 58, 39))
                         key_color_low = rgb_to_float((155, 148, 39))
