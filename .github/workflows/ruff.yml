@@ -1,6 +1,12 @@
 name: Ruff
 
-on: [ push, pull_request ]
+on:
+  push:
+    paths:
+      - '!**.md'
+      - '!**.yml'
+      - '.github/workflows/ruff.yml'
+  pull_request:
 
 permissions:
   contents: read
