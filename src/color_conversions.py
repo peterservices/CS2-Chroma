@@ -8,7 +8,7 @@ def float_to_rgb(rgb_float: tuple[float, float, float]) -> tuple[int, int, int]:
     """
     Convert a float color to an RGB color.
     """
-    return tuple(int(round(color * 255)) for color in rgb_float)
+    return tuple(round(color * 255) for color in rgb_float)
 
 def rgb_to_decimal(rgb: tuple[int, int, int]) -> int:
     """
