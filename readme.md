@@ -1,5 +1,8 @@
 # Counter-Strike 2 Razer Chroma Integration
 
+[![Build](https://github.com/peterservices/CS2-Chroma/actions/workflows/build.yml/badge.svg)](https://github.com/peterservices/CS2-Chroma/actions/workflows/build.yml)
+[![Ruff](https://github.com/peterservices/CS2-Chroma/actions/workflows/ruff.yml/badge.svg)](https://github.com/peterservices/CS2-Chroma/actions/workflows/ruff.yml)
+
 A configurable Razer Chroma integration that brings the heat of the game to your keyboard with color effects.
 
 > [!NOTE]
