@@ -6,7 +6,7 @@ from winrt.windows.media.control import (
 )
 
 
-async def stop_playback():
+async def stop_playback() -> None:
     """
     Stop playing media if it is currently playing.
     """
@@ -18,7 +18,7 @@ async def stop_playback():
     if current_session is not None and current_session.get_playback_info().playback_status == PlaybackState.PLAYING:
         await current_session.try_toggle_play_pause_async()
 
-async def start_playback():
+async def start_playback() -> None:
     """
     Start playing media if it is currently paused.
     """

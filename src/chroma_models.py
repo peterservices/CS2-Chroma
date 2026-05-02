@@ -18,7 +18,7 @@ class ChromaEffect(BaseModel):
 
     @field_validator("colors", mode="after")
     @classmethod
-    def validate_colors_dimensions(cls, value: list[list[tuple[float, float, float]]]):
+    def validate_colors_dimensions(cls, value: list[list[tuple[float, float, float]]]) -> list[list[tuple[float, float, float]]]:
         if len(value) != 6:
             raise ValueError(f"Expected outer list to have a length of 6, got {len(value)}")
         for inner_list in value:
@@ -98,7 +98,7 @@ class ChromaState(BaseModel):
             with self.lock:
                 self.effects.remove(effect)
 
-    def remove_player_effects(self):
+    def remove_player_effects(self) -> None:
         """
         Remove in-game player specific effects from the effects list.
         """

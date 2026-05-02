@@ -1,7 +1,7 @@
 # IMPORTS
 import asyncio
 from collections.abc import Coroutine
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -87,7 +87,7 @@ class Configuration(BaseModel):
     inventory_key_indicators: bool = True
     interaction_key_indicators: bool = False
 
-def async_to_sync(coro: Coroutine):
+def async_to_sync(coro: Coroutine) -> Any:
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:

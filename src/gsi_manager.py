@@ -321,7 +321,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
             chroma_control.state.remove_player_effects()
 
 class GamestateServer(http.server.HTTPServer):
-    def __init__(self, address: tuple, RequestHandler: type, config: Configuration):
+    def __init__(self, address: tuple, RequestHandler: type, config: Configuration) -> None:
         self.gamestate_manager = GameState()
         self.chroma_control = ChromaControl()
         self.config = config
