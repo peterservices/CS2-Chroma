@@ -3,6 +3,7 @@ name: Ruff
 on:
   push:
     paths:
+      - "**"
       - '!**.md'
       - '!**.yml'
       - '.github/workflows/ruff.yml'
