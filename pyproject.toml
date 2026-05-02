@@ -17,20 +17,25 @@ dev = [
 
 [tool.ruff.lint]
 extend-select = [
-    "F",
-    "W",
-    "E",
-    "I",
-    "UP",
+    "B",
     "C4",
-    "ISC",
+    "E",
+    "F",
+    "FBT",
+    "I",
     "ICN",
+    "ISC",
+    "PTH",
+    "PYI",
     "RET",
+    "RUF",
+    "S",
+    "SIM",
     "SIM",
     "TID",
-    "PYI"
+    "UP",
+    "W"
 ]
 ignore = [
-    "E501",
-    "SIM117"
+    "E501"
 ]
