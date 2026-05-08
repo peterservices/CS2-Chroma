@@ -34,6 +34,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
         self.parse_payload(body)
 
         self.send_response(200)
+        self.end_headers()
 
     def log_request(self, code = "-", size = "-") -> None:
         if self.server.logging:
@@ -107,7 +108,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
             if player_changed: # Store a copy of the player's object for win/loss effects
                 if _payload["steamid"] == gamestate_manager.steam_id:
                     gamestate_manager.local_player = gamestate_manager.player
-                    if self.server.config.pause_system_media_while_alive and "state" in payload["player"]:
+                    if self.server.config.pause_system_media_while_alive and "map" in payload:
                         try:
                             async_to_sync(stop_playback())
                         except Exception:
@@ -337,8 +338,8 @@ class GamestateServer(http.server.HTTPServer):
         """
         Complete various background tasks.
 
-        - Checks to see if the game has pinged the server in the last 6 seconds.
-        - Updates various indicator
+        - Check to see if the game has pinged the server in the last 6 seconds.
+        - Update various indicator
         """
         while True:
             time.sleep(0.1) # If we don't wait, other threads may be severely slowed down
