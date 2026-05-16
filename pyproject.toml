@@ -40,3 +40,9 @@ extend-select = [
 ignore = [
     "E501"
 ]
+
+[tool.pyrefly]
+preset = "basic"
+project-includes = [
+    "**/*.py*",
+]
