@@ -75,7 +75,7 @@ def setup() -> None:
         # Compare the file contents to check for changes
         with Path(config_file).open() as file:
             existing_file = file.read()
-        with Path.open("gamestate_integration_razerchroma.cfg") as file:
+        with Path("gamestate_integration_razerchroma.cfg").open() as file:
             if existing_file != file.read():
                 copy_config = True
     else:
