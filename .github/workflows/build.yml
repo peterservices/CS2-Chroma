@@ -55,7 +55,6 @@ jobs:
         with:
           name: cs2_chroma_windows.zip
           path: dist/cs2_chroma/cs2_chroma_windows.zip
-          retention-days: 15
           overwrite: true
           archive: false
 
