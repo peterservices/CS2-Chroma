@@ -338,13 +338,13 @@ class GamestateServer(http.server.HTTPServer):
         """
         Complete various background tasks.
 
-        - Check to see if the game has pinged the server in the last 6 seconds.
-        - Update various indicator
+        - Check to see if the game has pinged the server in the last 7 seconds.
+        - Update various indicators
         """
         while True:
             time.sleep(0.1) # If we don't wait, other threads may be severely slowed down
             # Detect game close
-            if time.time() - self.gamestate_manager.last_heartbeat > 6: # Allow an extra second of missed heartbeats to be sure the game is actually closed
+            if time.time() - self.gamestate_manager.last_heartbeat > 7: # Allow two extra seconds of missed heartbeats to be sure the game is actually closed
                 if self.chroma_control.connected_event.is_set():
                     logger.info("Lost connection to game")
                     self.chroma_control.disconnect()
