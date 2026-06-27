@@ -2,7 +2,6 @@
 import http.server
 import json
 import logging
-import sys
 import threading
 import time
 from typing import Any
@@ -349,7 +348,7 @@ class GamestateServer(http.server.HTTPServer):
                     logger.info("Lost connection to game")
                     self.chroma_control.disconnect()
                     if self.config.close_after_game_close:
-                        sys.exit()
+                        self.shutdown()
             elif not self.chroma_control.connected_event.is_set():
                 logger.info("Connected to game")
                 self.chroma_control.connect()
