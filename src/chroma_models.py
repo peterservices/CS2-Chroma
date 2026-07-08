@@ -19,11 +19,11 @@ class ChromaEffect(BaseModel):
     @field_validator("colors", mode="after")
     @classmethod
     def validate_colors_dimensions(cls, value: list[list[tuple[float, float, float]]]) -> list[list[tuple[float, float, float]]]:
-        if len(value) != 6:
-            raise ValueError(f"Expected outer list to have a length of 6, got {len(value)}")
+        if len(value) != 8:
+            raise ValueError(f"Expected outer list to have a length of 8, got {len(value)}")
         for inner_list in value:
-            if len(inner_list) != 22:
-                raise ValueError(f"Expected inner list to have a length of 22, got {len(inner_list)}")
+            if len(inner_list) != 24:
+                raise ValueError(f"Expected inner list to have a length of 24, got {len(inner_list)}")
 
         return value
 

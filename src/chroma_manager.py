@@ -139,7 +139,7 @@ class ChromaControl(requests.Session):
                     self.state.previous_effects = deepcopy(self.state.effects)
 
                 if effect_changed and len(self.state.effects) > 0:
-                    colors = [[(0.0, 0.0, 0.0) for _ in range(22)] for _ in range(6)]
+                    colors = [[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)]
                     for effect in self.state.effects:
                         match effect.method:
                             case "ADD":
@@ -176,9 +176,12 @@ class ChromaControl(requests.Session):
                         self.request("PUT",
                                      self.url + "/keyboard",
                                      json={
-                                         "effect": "CHROMA_CUSTOM",
-                                         "param": colors
-                                         },
+                                         "effect": "CHROMA_CUSTOM2",
+                                         "param": {
+                                            "color": colors,
+                                            "key": [[0 for _ in range(22)] for _ in range(6)] # Make key param all zeros because it's not needed
+                                        }
+                                     },
                                      timeout=0.00001)
                 elif effect_changed:
                     with contextlib.suppress(requests.exceptions.Timeout, requests.exceptions.ConnectionError):

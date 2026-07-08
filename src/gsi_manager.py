@@ -137,7 +137,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                             death_effect = ChromaEffect(
                                 type="STATIC",
                                 method="FILL",
-                                colors=[[death_color for _ in range(22)] for _ in range(6)],
+                                colors=[[death_color for _ in range(24)] for _ in range(8)],
                                 id="death",
                             )
                             chroma_control.state.add_effect(death_effect)
@@ -166,7 +166,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                             kill_effect = ChromaEffect(
                                 type="STATIC",
                                 method="FILL",
-                                colors=[[kill_color for _ in range(22)] for _ in range(6)],
+                                colors=[[kill_color for _ in range(24)] for _ in range(8)],
                                 decay_amount=20/255,
                                 update_rate=0.1,
                                 last_update=time.time(),
@@ -201,7 +201,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                             flash_effect = ChromaEffect(
                                 type="STATIC",
                                 method="ADD",
-                                colors=[[flash_color for _ in range(22)] for _ in range(6)],
+                                colors=[[flash_color for _ in range(24)] for _ in range(8)],
                                 id="flash",
                             )
                             chroma_control.state.add_effect(flash_effect)
@@ -222,7 +222,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                             smoke_effect = ChromaEffect(
                                 type="STATIC",
                                 method="ADD",
-                                colors=[[smoke_color for _ in range(22)] for _ in range(6)],
+                                colors=[[smoke_color for _ in range(24)] for _ in range(8)],
                                 id="smoke",
                             )
                             chroma_control.state.add_effect(smoke_effect)
@@ -284,7 +284,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                                     shoot_effect = ChromaEffect(
                                         type="STATIC",
                                         method="ADD",
-                                        colors=[[shoot_color for _ in range(22)] for _ in range(6)],
+                                        colors=[[shoot_color for _ in range(24)] for _ in range(8)],
                                         update_rate=0.15,
                                         expires_after_updates=1,
                                         last_update=time.time(),
@@ -362,7 +362,7 @@ class GamestateServer(http.server.HTTPServer):
                             effect = ChromaEffect(
                                 type="STATIC",
                                 method="FILL_NO_ZERO",
-                                colors=[[(0.0, 0.0, 0.0) for _ in range(22)] for _ in range(6)],
+                                colors=[[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)],
                                 id="defusal_indicator"
                             )
                             self.chroma_control.state.add_effect(effect)
@@ -374,7 +374,7 @@ class GamestateServer(http.server.HTTPServer):
                         else:
                             colors = [(1.0, 0.0, 0.0) for _ in range(12)]
 
-                        effect.colors[0][3:15] = colors
+                        effect.colors[1][4:16] = colors
                     elif effect is not None:
                         self.chroma_control.state.remove_effect(effect)
 
@@ -407,21 +407,21 @@ class GamestateServer(http.server.HTTPServer):
                     effect = self.chroma_control.state.find_effect_by_id("movement_key_indicator")
                     if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None:
                         if effect is None:
-                            key_colors = [[(0.0, 0.0, 0.0) for _ in range(22)] for _ in range(6)]
+                            key_colors = [[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)]
                             key_color = rgb_to_float((222, 155, 53))
 
                             # WASD
-                            key_colors[2][3] = key_color
-                            key_colors[3][2:5] = [key_color for _ in range(3)]
+                            key_colors[3][4] = key_color
+                            key_colors[4][3:6] = [key_color for _ in range(3)]
 
                             # SHIFT
-                            key_colors[4][:2] = [key_color for _ in range(2)]
+                            key_colors[5][:2] = [key_color for _ in range(2)]
 
                             # CTRL
-                            key_colors[5][1] = key_color
+                            key_colors[6][2] = key_color
 
                             # SPACE
-                            key_colors[5][4:11] = [key_color for _ in range(7)]
+                            key_colors[6][5:12] = [key_color for _ in range(7)]
 
                             effect = ChromaEffect(
                                 type="STATIC",
@@ -439,20 +439,20 @@ class GamestateServer(http.server.HTTPServer):
                     effect = self.chroma_control.state.find_effect_by_id("interaction_key_indicator")
                     if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None:
                         if effect is None:
-                            key_colors = [[(0.0, 0.0, 0.0) for _ in range(22)] for _ in range(6)]
+                            key_colors = [[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)]
                             key_color = rgb_to_float((65, 58, 39))
 
                             # TAB, E, R, T, Y, U
-                            key_colors[2][:2] = [key_color for _ in range(2)]
-                            key_colors[2][4:9] = [key_color for _ in range(5)]
+                            key_colors[3][1:3] = [key_color for _ in range(2)]
+                            key_colors[3][5:10] = [key_color for _ in range(5)]
 
                             # G
-                            key_colors[3][5:8] = [key_color for _ in range(3)]
+                            key_colors[4][7] = key_color
 
                             # Z, C, V, B, M
-                            key_colors[4][3] = key_color
-                            key_colors[4][5:8] = [key_color for _ in range(3)]
-                            key_colors[4][9] = key_color
+                            key_colors[5][4] = key_color
+                            key_colors[5][6:9] = [key_color for _ in range(3)]
+                            key_colors[5][10] = key_color
 
                             effect = ChromaEffect(
                                 type="STATIC",
@@ -469,7 +469,7 @@ class GamestateServer(http.server.HTTPServer):
                 if self.config.inventory_key_indicators:
                     effect = self.chroma_control.state.find_effect_by_id("inventory_key_indicator")
                     if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None and self.gamestate_manager.player.state is not None:
-                        colors = [[(0.0, 0.0, 0.0) for _ in range(22)] for _ in range(6)]
+                        colors = [[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)]
                         key_color = rgb_to_float((65, 58, 39))
                         key_color_low = rgb_to_float((155, 148, 39))
                         key_color_empty = rgb_to_float((155, 58, 39))
@@ -486,20 +486,20 @@ class GamestateServer(http.server.HTTPServer):
                         for _, v in self.gamestate_manager.player.state.weapons.items():
                             match v.type:
                                 case "Pistol":
-                                    effect.colors[1][3] = key_color_empty if v.ammo_clip == 0 else key_color_low if v.ammo_clip < v.ammo_clip_max / 3 else key_color # 2
+                                    effect.colors[2][4] = key_color_empty if v.ammo_clip == 0 else key_color_low if v.ammo_clip < v.ammo_clip_max / 3 else key_color # 2
                                 case "Knife":
-                                    effect.colors[1][4] = key_color # 3
+                                    effect.colors[2][5] = key_color # 3
                                 case "Grenade":
-                                    effect.colors[1][5] = key_color # 4
+                                    effect.colors[2][6] = key_color # 4
                                 case "StackableItem":
-                                    effect.colors[4][4] = key_color # X
+                                    effect.colors[5][5] = key_color # X
                                 case "C4":
-                                    effect.colors[1][6] = key_color # 5
+                                    effect.colors[2][7] = key_color # 5
                                 case _:
                                     if v.name == "weapon_taser":
-                                        effect.colors[1][4] = key_color_empty if v.ammo_clip == 0 else key_color # 3
+                                        effect.colors[2][5] = key_color_empty if v.ammo_clip == 0 else key_color # 3
                                     else: # The primary weapon can have many different types
-                                        effect.colors[1][2] = key_color_empty if v.ammo_clip == 0 else key_color_low if v.ammo_clip < v.ammo_clip_max / 3 else key_color # 1
+                                        effect.colors[2][3] = key_color_empty if v.ammo_clip == 0 else key_color_low if v.ammo_clip < v.ammo_clip_max / 3 else key_color # 1
                     elif effect is not None:
                         self.chroma_control.state.remove_effect(effect)
 
