@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - zone-test-4
     tags:
       - "v*.*.*"
     paths:
