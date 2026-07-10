@@ -1,6 +1,8 @@
 @echo off
 cd /D "%~dp0" & :: Enter the project directory
 
+echo CS2-Chroma 10 Zone Test Function Row
+
 :: Execute the command(s) passed (Should be the game executable along with any arguments)
 IF NOT "%~1" == "" (
     echo Launching game executable...
