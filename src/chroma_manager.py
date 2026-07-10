@@ -176,8 +176,11 @@ class ChromaControl(requests.Session):
                         self.request("PUT",
                                      self.url + "/keyboard",
                                      json={
-                                         "effect": "CHROMA_CUSTOM",
-                                         "param": colors
+                                         "effect": "CHROMA_CUSTOM_KEY",
+                                         "param": {
+                                                "color": colors,
+                                                "key": [[0 for _ in range(22)] for _ in range(6)] # Make key param all zeros because it's not needed
+                                            }
                                          },
                                      timeout=0.00001)
                 elif effect_changed:
