@@ -1,6 +1,8 @@
 @echo off
 cd /D "%~dp0" & :: Enter the project directory
 
+echo CS2-Chroma Key Only Test
+
 :: Execute the command(s) passed (Should be the game executable along with any arguments)
 IF NOT "%~1" == "" (
     echo Launching game executable...
