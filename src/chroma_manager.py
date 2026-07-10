@@ -173,7 +173,7 @@ class ChromaControl(requests.Session):
                             colors[row][column] = float_to_decimal(column_v)
 
                     with contextlib.suppress(requests.exceptions.Timeout, requests.exceptions.ConnectionError):
-                        self.request("PUT",
+                        logger.info(self.request("PUT",
                                      self.url + "/keyboard",
                                      json={
                                          "effect": "CHROMA_CUSTOM2",
@@ -181,10 +181,9 @@ class ChromaControl(requests.Session):
                                             "color": colors,
                                             "key": [[0 for _ in range(22)] for _ in range(6)] # Make key param all zeros because it's not needed
                                         }
-                                     },
-                                     timeout=0.00001)
+                                     }).json())
                 elif effect_changed:
                     with contextlib.suppress(requests.exceptions.Timeout, requests.exceptions.ConnectionError):
-                        self.request("PUT", self.url + "/keyboard", json={"effect": "CHROMA_NONE"}, timeout=0.00001)
+                        logger.info(self.request("PUT", self.url + "/keyboard", json={"effect": "CHROMA_NONE"}).json())
 
 # By @peterservices
