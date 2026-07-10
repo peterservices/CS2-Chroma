@@ -170,7 +170,10 @@ class ChromaControl(requests.Session):
                     # Convert the float colors to decimal colors usable by the Chroma SDK API
                     for row, row_v in enumerate(colors):
                         for column, column_v in enumerate(row_v):
-                            colors[row][column] = float_to_decimal(column_v)
+                            if row == 0 and column < 10:
+                                colors[row][column] = float_to_decimal(column_v)
+                            else:
+                                colors[row][column] = 0
 
                     with contextlib.suppress(requests.exceptions.Timeout, requests.exceptions.ConnectionError):
                         self.request("PUT",
