@@ -176,10 +176,9 @@ class ChromaControl(requests.Session):
                         self.request("PUT",
                                      self.url + "/keyboard",
                                      json={
-                                         "effect": "CHROMA_CUSTOM2",
+                                         "effect": "CHROMA_STATIC",
                                          "param": {
-                                            "color": colors,
-                                            "key": [[0 for _ in range(22)] for _ in range(6)] # Make key param all zeros because it's not needed
+                                            "color": colors[0][0] # Pick the color from the top left of the grid
                                         }
                                      },
                                      timeout=0.00001)
