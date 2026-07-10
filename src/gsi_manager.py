@@ -325,7 +325,7 @@ class GamestateServer(http.server.HTTPServer):
         self.gamestate_manager = GameState()
         self.chroma_control = ChromaControl()
         self.config = config
-        self.logging = False
+        self.logging = True
 
         super().__init__(address, RequestHandler)
 
