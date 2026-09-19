@@ -1,11 +1,11 @@
 # IMPORTS
-import contextlib
+import json
 import logging
 import threading
 import time
 from copy import deepcopy
 
-import requests
+import websocket
 
 from chroma_models import ChromaState
 from color_conversions import float_to_decimal
@@ -13,93 +13,65 @@ from effects import update_explosion_effect, update_wave_effect
 
 logger = logging.getLogger(__name__)
 
-class ChromaControl(requests.Session):
+WEBSOCKET_URI = "ws://localhost:13337/razer/chromasdk"
+
+class ChromaControl(websocket.WebSocket):
     """
-    Custom `requests.Session` implementation to control Razer Chroma enabled devices.
+    Custom `websocket.WebSocket` implementation to control Razer Chroma enabled devices.
     """
     def __init__(self) -> None:
-        self.state = ChromaState()
-        self.connected_event = threading.Event()
+        self.chroma_state = ChromaState()
+        self.chroma_connected_event = threading.Event()
 
         super().__init__()
 
-        effect_thread = threading.Thread(target=self.update_effects, daemon=True)
-        effect_thread.start()
+        chroma_effect_thread = threading.Thread(target=self.chroma_update_effects, daemon=True)
+        chroma_effect_thread.start()
 
-    def start_heartbeat(self) -> None:
-        """
-        Start a heartbeat to the Razer Chroma SDK in a seperate thread.
-        """
-        heartbeat_thread = threading.Thread(target=self.heartbeat, daemon=True)
-        heartbeat_thread.start()
-
-    def heartbeat(self) -> None:
-        """
-        Ping the Razer Chroma SDK every 5 seconds.
-        """
-        while self.connected_event.is_set():
-            with contextlib.suppress(requests.exceptions.Timeout, requests.exceptions.ConnectionError):
-                self.request("PUT", self.url + "/heartbeat", timeout=0.00001)
-            time.sleep(5)
-
-    def connect(self) -> None:
+    def chroma_connect(self) -> None:
         """
         Connect to the Razer Chroma SDK.
         """
-        response = self.request("POST",
-                     "http://localhost:54235/razer/chromasdk",
-                     json={
-                        "title": "Counter-Strike 2 Razer Chroma Integration",
-                        "description": "Get RGB feedback to actions in-game!",
-                        "author": {
-                            "name": "Ticataco",
-                            "contact": "https://discord.gg/MPPvzQK2zk"
-                        },
-                        "device_supported": [
-                            "keyboard"
-                        ],
-                        "category": "application"
-                     })
-        body = response.json()
-        self.url: str = body["uri"]
-        self.connected_event.set()
-        self.start_heartbeat()
-        self.state = ChromaState()
+        self.connect(WEBSOCKET_URI)
+        self.send(json.dumps({
+            "title": "Counter-Strike 2 Razer Chroma Integration",
+            "description": "Get RGB feedback to actions in-game!",
+            "author": {
+                "name": "Ticataco",
+                "contact": "https://discord.gg/MPPvzQK2zk"
+            },
+            "device_supported": [
+                "keyboard"
+            ],
+            "category": "application"
+        }))
+        self.chroma_connected_event.set()
+        self.chroma_state = ChromaState()
 
         time.sleep(2) # Give the Chroma SDK time to intialize the app before resetting the keyboard RGB
-        result = self.request("PUT", self.url + "/keyboard", json={"effect": "CHROMA_NONE"}).json()
+        self.send(json.dumps({"endpoint": "keyboard", "effect": "CHROMA_NONE"}))
+        logger.info(f"Connected to {WEBSOCKET_URI}")
 
-        # Check that we successfully set the keyboard's color
-        if result["result"] != 0:
-            self.disconnect()
-            if result["result"] == 126:
-                logger.error(f"Failed to set Chroma keyboard color, disconnecting from Razer Chroma SDK. This error is usually caused by having the non-BETA version of Razer Synapse 4 installed. Code: {result["result"]}")
-            else:
-                logger.error(f"Failed to set Chroma keyboard color, disconnecting from Razer Chroma SDK. Code: {result["result"]}")
-        else:
-            logger.info(f"Connected to {self.url}")
-
-    def disconnect(self) -> None:
+    def chroma_disconnect(self) -> None:
         """
         Disconnect from the Razer Chroma SDK.
         """
-        self.connected_event.clear()
-        with contextlib.suppress(requests.exceptions.Timeout, requests.exceptions.ConnectionError):
-            self.request("DELETE", self.url, timeout=0.00001)
+        self.chroma_connected_event.clear()
+        self.close()
 
-        logger.info(f"Disconnected from {self.url}")
+        logger.info(f"Disconnected from {WEBSOCKET_URI}")
 
-    def update_effects(self) -> None:
+    def chroma_update_effects(self) -> None:
         """
         Update the keyboard's color with active effects, and update any effect animations.
         """
         while True:
-            self.connected_event.wait()
+            self.chroma_connected_event.wait()
 
             expiring_effects = []
             effect_changed = False
-            with self.state.lock:
-                for effect in self.state.effects:
+            with self.chroma_state.lock:
+                for effect in self.chroma_state.effects:
                     if effect.update_rate is not None and time.time() - effect.last_update >= effect.update_rate:
                         if effect.expires_after_updates is not None:
                             if effect.expires_after_updates == 0:
@@ -130,16 +102,16 @@ class ChromaControl(requests.Session):
                                 update_explosion_effect(effect)
                         effect.last_update = time.time()
                 for effect in expiring_effects:
-                    self.state.effects.remove(effect)
+                    self.chroma_state.effects.remove(effect)
 
                 if not effect_changed:
-                    effect_changed = self.state.effects != self.state.previous_effects
+                    effect_changed = self.chroma_state.effects != self.chroma_state.previous_effects
                 if effect_changed:
-                    self.state.previous_effects = deepcopy(self.state.effects)
+                    self.chroma_state.previous_effects = deepcopy(self.chroma_state.effects)
 
-                if effect_changed and len(self.state.effects) > 0:
+                if effect_changed and len(self.chroma_state.effects) > 0:
                     colors = [[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)]
-                    for effect in self.state.effects:
+                    for effect in self.chroma_state.effects:
                         match effect.method:
                             case "ADD":
                                 # Add everything
@@ -171,19 +143,18 @@ class ChromaControl(requests.Session):
                         for column, column_v in enumerate(row_v):
                             colors[row][column] = float_to_decimal(column_v)
 
-                    with contextlib.suppress(requests.exceptions.Timeout, requests.exceptions.ConnectionError):
-                        self.request("PUT",
-                                     self.url + "/keyboard",
-                                     json={
-                                         "effect": "CHROMA_CUSTOM2",
-                                         "param": {
-                                            "color": colors,
-                                            "key": [[0 for _ in range(22)] for _ in range(6)] # Make key param all zeros because it's not needed
-                                        }
-                                     },
-                                     timeout=0.00001)
+                    self.send(json.dumps({
+                        "endpoint": "keyboard",
+                        "effect": "CHROMA_CUSTOM2",
+                        "param": {
+                           "color": colors,
+                           "key": [[0 for _ in range(22)] for _ in range(6)] # Make key param all zeros because it's not needed
+                        }
+                    }))
                 elif effect_changed:
-                    with contextlib.suppress(requests.exceptions.Timeout, requests.exceptions.ConnectionError):
-                        self.request("PUT", self.url + "/keyboard", json={"effect": "CHROMA_NONE"}, timeout=0.00001)
+                    self.send(json.dumps({
+                        "endpoint": "keyboard",
+                        "effect": "CHROMA_NONE"
+                    }))
 
 # By @peterservices

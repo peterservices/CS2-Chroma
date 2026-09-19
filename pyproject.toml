@@ -5,7 +5,7 @@ version = "0.1.9"
 requires-python = ">=3.13"
 dependencies = [
     "pydantic>=2.12.5",
-    "requests>=2.32.5",
+    "websocket-client>=1.9.2",
     "winrt-windows-foundation>=3.2.1",
     "winrt-windows-media-control>=3.2.1",
 ]

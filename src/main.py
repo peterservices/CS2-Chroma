@@ -95,8 +95,8 @@ def setup() -> None:
     try:
         gamestate_integration_server.serve_forever()
     except KeyboardInterrupt:
-        if gamestate_integration_server.chroma_control.connected_event.is_set():
-            gamestate_integration_server.chroma_control.disconnect()
+        if gamestate_integration_server.chroma_control.chroma_connected_event.is_set():
+            gamestate_integration_server.chroma_control.chroma_disconnect()
     except SystemExit:
         pass # Exception raised when shutting down when game is closed
 
