@@ -33,12 +33,13 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
         body_str: str = self.rfile.read(length).decode("utf-8")
         body: dict = json.loads(body_str)
 
-        self.parse_payload(body)
+        with self.server.chroma_control.chroma_state.lock:
+            self.parse_payload(body)
 
         self.send_response(200)
         self.end_headers()
 
-    def log_request(self, code = "-", size = "-") -> None:
+    def log_request(self, code: int | str = "-", size: int | str = "-") -> None:
         if self.server.logging:
             return super().log_request(code, size)
         return None
@@ -357,153 +358,154 @@ class GamestateServer(http.server.HTTPServer):
                 self.chroma_control.chroma_connect()
 
             if self.chroma_control.chroma_connected_event.is_set():
-                # Update defusal indicator
-                if self.config.defusal_indicator:
-                    effect = self.chroma_control.chroma_state.find_effect_by_id("defusal_indicator")
-                    if self.gamestate_manager.round is not None and self.gamestate_manager.round.bomb_plant_time is not None and self.gamestate_manager.round.bomb == "planted":
-                        if effect is None:
-                            effect = ChromaEffect(
-                                type="STATIC",
-                                method="FILL_NO_ZERO",
-                                colors=[[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)],
-                                id="defusal_indicator"
-                            )
-                            self.chroma_control.chroma_state.add_effect(effect)
+                with self.chroma_control.chroma_state.lock:
+                    # Update defusal indicator
+                    if self.config.defusal_indicator:
+                        effect = self.chroma_control.chroma_state.find_effect_by_id("defusal_indicator")
+                        if self.gamestate_manager.round is not None and self.gamestate_manager.round.bomb_plant_time is not None and self.gamestate_manager.round.bomb == "planted":
+                            if effect is None:
+                                effect = ChromaEffect(
+                                    type="STATIC",
+                                    method="FILL_NO_ZERO",
+                                    colors=[[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)],
+                                    id="defusal_indicator"
+                                )
+                                self.chroma_control.chroma_state.add_effect(effect)
 
-                        if time.time() - self.gamestate_manager.round.bomb_plant_time < 30:
-                            colors = [(0.0, 1.0, 0.0) for _ in range(12)]
-                        elif time.time() - self.gamestate_manager.round.bomb_plant_time < 35:
-                            colors = [(0.0, 0.0, 1.0) for _ in range(12)]
-                        else:
-                            colors = [(1.0, 0.0, 0.0) for _ in range(12)]
-
-                        effect.colors[1][4:16] = colors
-                    elif effect is not None:
-                        self.chroma_control.chroma_state.remove_effect(effect)
-
-                # Update game result indicator
-                if self.config.effects.game_result_effect:
-                    effect = self.chroma_control.chroma_state.find_effect_by_id("result")
-                    if self.gamestate_manager.map is not None and self.gamestate_manager.map.phase == "gameover":
-                        if effect is None:
-                            if self.gamestate_manager.local_player and ((self.gamestate_manager.local_player.team == "CT" and self.gamestate_manager.map.ct_team.score > self.gamestate_manager.map.t_team.score) or (self.gamestate_manager.local_player.team == "T" and self.gamestate_manager.map.ct_team.score < self.gamestate_manager.map.t_team.score)):
-                                result_colors = create_wave_effect(colors=[(0, 255, 0), (105, 246, 104), (31, 201, 31)], line_orientation="VERTICAL", mode="CLUSTER")
-                            elif self.gamestate_manager.local_player and self.gamestate_manager.map.ct_team.score != self.gamestate_manager.map.t_team.score:
-                                result_colors = create_wave_effect(colors=[(255, 0, 0), (246, 105, 104), (201, 31, 31)], line_orientation="VERTICAL", mode="CLUSTER")
+                            if time.time() - self.gamestate_manager.round.bomb_plant_time < 30:
+                                colors = [(0.0, 1.0, 0.0) for _ in range(12)]
+                            elif time.time() - self.gamestate_manager.round.bomb_plant_time < 35:
+                                colors = [(0.0, 0.0, 1.0) for _ in range(12)]
                             else:
-                                result_colors = create_wave_effect(colors=[(150, 150, 150), (205, 205, 205), (90, 90, 90)], line_orientation="VERTICAL", mode="CLUSTER")
+                                colors = [(1.0, 0.0, 0.0) for _ in range(12)]
 
-                            effect = ChromaEffect(
-                                type="WAVE",
-                                method="FILL",
-                                direction="RIGHT",
-                                colors=result_colors,
-                                update_rate=0.2,
-                                id="result"
-                            )
-                            self.chroma_control.chroma_state.add_effect(effect)
-                    elif effect is not None:
-                        self.chroma_control.chroma_state.remove_effect(effect)
+                            effect.colors[1][4:16] = colors
+                        elif effect is not None:
+                            self.chroma_control.chroma_state.remove_effect(effect)
 
-                # Update movement key indicators
-                if self.config.movement_key_indicators:
-                    effect = self.chroma_control.chroma_state.find_effect_by_id("movement_key_indicator")
-                    if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None:
-                        if effect is None:
-                            key_colors = [[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)]
-                            key_color = rgb_to_float((222, 155, 53))
+                    # Update game result indicator
+                    if self.config.effects.game_result_effect:
+                        effect = self.chroma_control.chroma_state.find_effect_by_id("result")
+                        if self.gamestate_manager.map is not None and self.gamestate_manager.map.phase == "gameover":
+                            if effect is None:
+                                if self.gamestate_manager.local_player and ((self.gamestate_manager.local_player.team == "CT" and self.gamestate_manager.map.ct_team.score > self.gamestate_manager.map.t_team.score) or (self.gamestate_manager.local_player.team == "T" and self.gamestate_manager.map.ct_team.score < self.gamestate_manager.map.t_team.score)):
+                                    result_colors = create_wave_effect(colors=[(0, 255, 0), (105, 246, 104), (31, 201, 31)], line_orientation="VERTICAL", mode="CLUSTER")
+                                elif self.gamestate_manager.local_player and self.gamestate_manager.map.ct_team.score != self.gamestate_manager.map.t_team.score:
+                                    result_colors = create_wave_effect(colors=[(255, 0, 0), (246, 105, 104), (201, 31, 31)], line_orientation="VERTICAL", mode="CLUSTER")
+                                else:
+                                    result_colors = create_wave_effect(colors=[(150, 150, 150), (205, 205, 205), (90, 90, 90)], line_orientation="VERTICAL", mode="CLUSTER")
 
-                            # WASD
-                            key_colors[3][4] = key_color
-                            key_colors[4][3:6] = [key_color for _ in range(3)]
+                                effect = ChromaEffect(
+                                    type="WAVE",
+                                    method="FILL",
+                                    direction="RIGHT",
+                                    colors=result_colors,
+                                    update_rate=0.2,
+                                    id="result"
+                                )
+                                self.chroma_control.chroma_state.add_effect(effect)
+                        elif effect is not None:
+                            self.chroma_control.chroma_state.remove_effect(effect)
 
-                            # SHIFT
-                            key_colors[5][:2] = [key_color for _ in range(2)]
+                    # Update movement key indicators
+                    if self.config.movement_key_indicators:
+                        effect = self.chroma_control.chroma_state.find_effect_by_id("movement_key_indicator")
+                        if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None:
+                            if effect is None:
+                                key_colors = [[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)]
+                                key_color = rgb_to_float((222, 155, 53))
 
-                            # CTRL
-                            key_colors[6][2] = key_color
+                                # WASD
+                                key_colors[3][4] = key_color
+                                key_colors[4][3:6] = [key_color for _ in range(3)]
 
-                            # SPACE
-                            key_colors[6][5:12] = [key_color for _ in range(7)]
+                                # SHIFT
+                                key_colors[5][:2] = [key_color for _ in range(2)]
 
-                            effect = ChromaEffect(
-                                type="STATIC",
-                                method="FILL_NO_ZERO",
-                                direction="RIGHT",
-                                colors=key_colors,
-                                id="movement_key_indicator"
-                            )
-                            self.chroma_control.chroma_state.add_effect(effect)
-                    elif effect is not None:
-                        self.chroma_control.chroma_state.remove_effect(effect)
+                                # CTRL
+                                key_colors[6][2] = key_color
 
-                # Update interaction key indicators
-                if self.config.interaction_key_indicators:
-                    effect = self.chroma_control.chroma_state.find_effect_by_id("interaction_key_indicator")
-                    if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None:
-                        if effect is None:
-                            key_colors = [[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)]
+                                # SPACE
+                                key_colors[6][5:12] = [key_color for _ in range(7)]
+
+                                effect = ChromaEffect(
+                                    type="STATIC",
+                                    method="FILL_NO_ZERO",
+                                    direction="RIGHT",
+                                    colors=key_colors,
+                                    id="movement_key_indicator"
+                                )
+                                self.chroma_control.chroma_state.add_effect(effect)
+                        elif effect is not None:
+                            self.chroma_control.chroma_state.remove_effect(effect)
+
+                    # Update interaction key indicators
+                    if self.config.interaction_key_indicators:
+                        effect = self.chroma_control.chroma_state.find_effect_by_id("interaction_key_indicator")
+                        if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None:
+                            if effect is None:
+                                key_colors = [[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)]
+                                key_color = rgb_to_float((65, 58, 39))
+
+                                # TAB, E, R, T, Y, U
+                                key_colors[3][1:3] = [key_color for _ in range(2)]
+                                key_colors[3][5:10] = [key_color for _ in range(5)]
+
+                                # G
+                                key_colors[4][7] = key_color
+
+                                # Z, C, V, B, M
+                                key_colors[5][4] = key_color
+                                key_colors[5][6:9] = [key_color for _ in range(3)]
+                                key_colors[5][10] = key_color
+
+                                effect = ChromaEffect(
+                                    type="STATIC",
+                                    method="FILL_NO_ZERO",
+                                    direction="RIGHT",
+                                    colors=key_colors,
+                                    id="interaction_key_indicator"
+                                )
+                                self.chroma_control.chroma_state.add_effect(effect)
+                        elif effect is not None:
+                            self.chroma_control.chroma_state.remove_effect(effect)
+
+                    # Update inventory key indicators depending on inventory content
+                    if self.config.inventory_key_indicators:
+                        effect = self.chroma_control.chroma_state.find_effect_by_id("inventory_key_indicator")
+                        if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None and self.gamestate_manager.player.state is not None:
+                            colors = [[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)]
                             key_color = rgb_to_float((65, 58, 39))
+                            key_color_low = rgb_to_float((155, 148, 39))
+                            key_color_empty = rgb_to_float((155, 58, 39))
+                            if effect is None:
+                                effect = ChromaEffect(
+                                    type="STATIC",
+                                    method="FILL_NO_ZERO",
+                                    colors=colors,
+                                    id="inventory_key_indicator"
+                                )
+                                self.chroma_control.chroma_state.add_effect(effect)
 
-                            # TAB, E, R, T, Y, U
-                            key_colors[3][1:3] = [key_color for _ in range(2)]
-                            key_colors[3][5:10] = [key_color for _ in range(5)]
-
-                            # G
-                            key_colors[4][7] = key_color
-
-                            # Z, C, V, B, M
-                            key_colors[5][4] = key_color
-                            key_colors[5][6:9] = [key_color for _ in range(3)]
-                            key_colors[5][10] = key_color
-
-                            effect = ChromaEffect(
-                                type="STATIC",
-                                method="FILL_NO_ZERO",
-                                direction="RIGHT",
-                                colors=key_colors,
-                                id="interaction_key_indicator"
-                            )
-                            self.chroma_control.chroma_state.add_effect(effect)
-                    elif effect is not None:
-                        self.chroma_control.chroma_state.remove_effect(effect)
-
-                # Update inventory key indicators depending on inventory content
-                if self.config.inventory_key_indicators:
-                    effect = self.chroma_control.chroma_state.find_effect_by_id("inventory_key_indicator")
-                    if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None and self.gamestate_manager.player.state is not None:
-                        colors = [[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)]
-                        key_color = rgb_to_float((65, 58, 39))
-                        key_color_low = rgb_to_float((155, 148, 39))
-                        key_color_empty = rgb_to_float((155, 58, 39))
-                        if effect is None:
-                            effect = ChromaEffect(
-                                type="STATIC",
-                                method="FILL_NO_ZERO",
-                                colors=colors,
-                                id="inventory_key_indicator"
-                            )
-                            self.chroma_control.chroma_state.add_effect(effect)
-
-                        effect.colors = colors
-                        for v in self.gamestate_manager.player.state.weapons.values():
-                            match v.type:
-                                case "Pistol":
-                                    effect.colors[2][4] = key_color_empty if v.ammo_clip == 0 else key_color_low if v.ammo_clip < v.ammo_clip_max / 3 else key_color # 2
-                                case "Knife":
-                                    effect.colors[2][5] = key_color # 3
-                                case "Grenade":
-                                    effect.colors[2][6] = key_color # 4
-                                case "StackableItem":
-                                    effect.colors[5][5] = key_color # X
-                                case "C4":
-                                    effect.colors[2][7] = key_color # 5
-                                case _:
-                                    if v.name == "weapon_taser":
-                                        effect.colors[2][5] = key_color_empty if v.ammo_clip == 0 else key_color # 3
-                                    else: # The primary weapon can have many different types
-                                        effect.colors[2][3] = key_color_empty if v.ammo_clip == 0 else key_color_low if v.ammo_clip < v.ammo_clip_max / 3 else key_color # 1
-                    elif effect is not None:
-                        self.chroma_control.chroma_state.remove_effect(effect)
+                            effect.colors = colors
+                            for v in self.gamestate_manager.player.state.weapons.values():
+                                match v.type:
+                                    case "Pistol":
+                                        effect.colors[2][4] = key_color_empty if v.ammo_clip == 0 else key_color_low if v.ammo_clip < v.ammo_clip_max / 3 else key_color # 2
+                                    case "Knife":
+                                        effect.colors[2][5] = key_color # 3
+                                    case "Grenade":
+                                        effect.colors[2][6] = key_color # 4
+                                    case "StackableItem":
+                                        effect.colors[5][5] = key_color # X
+                                    case "C4":
+                                        effect.colors[2][7] = key_color # 5
+                                    case _:
+                                        if v.name == "weapon_taser":
+                                            effect.colors[2][5] = key_color_empty if v.ammo_clip == 0 else key_color # 3
+                                        else: # The primary weapon can have many different types
+                                            effect.colors[2][3] = key_color_empty if v.ammo_clip == 0 else key_color_low if v.ammo_clip < v.ammo_clip_max / 3 else key_color # 1
+                        elif effect is not None:
+                            self.chroma_control.chroma_state.remove_effect(effect)
 
 # By @peterservices

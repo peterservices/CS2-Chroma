@@ -74,8 +74,7 @@ class ChromaState(BaseModel):
             highest_available_index = 0
             for id in effect_id_hierarchy:
                 if id == effect.id:
-                    with self.lock:
-                        self.effects.insert(highest_available_index, effect)
+                    self.effects.insert(highest_available_index, effect)
                     return
 
                 found_effect = self.find_effect_by_id(id)
@@ -84,12 +83,10 @@ class ChromaState(BaseModel):
 
                     # There is no point in checking the rest of the hierarchy if no other effects are in the list
                     if highest_available_index == len(self.effects):
-                        with self.lock:
-                            self.effects.append(effect)
+                        self.effects.append(effect)
                         return
         else:
-            with self.lock:
-                self.effects.append(effect)
+            self.effects.append(effect)
 
     def remove_effect(self, effect: ChromaEffect) -> None:
         """
@@ -99,8 +96,7 @@ class ChromaState(BaseModel):
             effect: The effect to be added to the active effects.
         """
         if effect in self.effects:
-            with self.lock:
-                self.effects.remove(effect)
+            self.effects.remove(effect)
 
     def remove_player_effects(self) -> None:
         """

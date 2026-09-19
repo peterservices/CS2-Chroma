@@ -19,11 +19,11 @@ class ChromaControl(websocket.WebSocket):
     """
     Custom `websocket.WebSocket` implementation to control Razer Chroma enabled devices.
     """
-    def __init__(self) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         self.chroma_state = ChromaState()
         self.chroma_connected_event = threading.Event()
 
-        super().__init__()
+        super().__init__(*args, **kwargs)
 
         chroma_effect_thread = threading.Thread(target=self.chroma_update_effects, daemon=True)
         chroma_effect_thread.start()
@@ -38,7 +38,7 @@ class ChromaControl(websocket.WebSocket):
             "description": "Get RGB feedback to actions in-game!",
             "author": {
                 "name": "Ticataco",
-                "contact": "https://discord.gg/MPPvzQK2zk"
+                "contact": "https://github.com/peterservices/CS2-Chroma/issues"
             },
             "device_supported": [
                 "keyboard"
