@@ -115,8 +115,7 @@ class ChromaControl(requests.Session):
                                     color: list[float] = []
                                     for i in range(3):
                                         color.append((column_v[i] - effect.decay_amount) if column_v[i] >= effect.decay_amount else 0)
-                                        if color[-1] > max_value:
-                                            max_value = color[-1]
+                                        max_value = max(max_value, color[-1])
                                     row_v[column] = tuple(color)
                             if effect.expires_after_updates is None and max_value == 0.0:
                                 expiring_effects.append(effect)
@@ -146,7 +145,7 @@ class ChromaControl(requests.Session):
                                 # Add everything
                                 for row, row_v in enumerate(effect.colors):
                                     for column, column_v in enumerate(row_v):
-                                        colors[row][column] = tuple([(colors[row][column][i] + column_v[i] if colors[row][column][i] + column_v[i] <= 1.0 else 1.0) for i in range(3)])
+                                        colors[row][column] = tuple([min(colors[row][column][i] + column_v[i], 1.0) for i in range(3)])
                             case "FILL":
                                 # Fill everything
                                 colors = deepcopy(effect.colors)
@@ -166,7 +165,7 @@ class ChromaControl(requests.Session):
                                 # Multiply everything
                                 for row, row_v in enumerate(effect.colors):
                                     for column, column_v in enumerate(row_v):
-                                        colors[row][column] = tuple([(colors[row][column][i] * column_v[i] if colors[row][column][i] * column_v[i] <= 1.0 else 1.0) for i in range(3)])
+                                        colors[row][column] = tuple([min(colors[row][column][i] * column_v[i], 1.0) for i in range(3)])
                     # Convert the float colors to decimal colors usable by the Chroma SDK API
                     for row, row_v in enumerate(colors):
                         for column, column_v in enumerate(row_v):

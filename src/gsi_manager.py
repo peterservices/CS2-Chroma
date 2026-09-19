@@ -483,7 +483,7 @@ class GamestateServer(http.server.HTTPServer):
                             self.chroma_control.state.add_effect(effect)
 
                         effect.colors = colors
-                        for _, v in self.gamestate_manager.player.state.weapons.items():
+                        for v in self.gamestate_manager.player.state.weapons.values():
                             match v.type:
                                 case "Pistol":
                                     effect.colors[2][4] = key_color_empty if v.ammo_clip == 0 else key_color_low if v.ammo_clip < v.ammo_clip_max / 3 else key_color # 2
