@@ -25,6 +25,9 @@ from utils import (
 logger = logging.getLogger(__name__)
 
 class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
+    """
+    Custom `http.server.BaseHTTPRequestHandler` implementation to receive and parse CS2 GSI data.
+    """
     def do_POST(self) -> None:
         length = int(self.headers["Content-Length"])
         body_str: str = self.rfile.read(length).decode("utf-8")

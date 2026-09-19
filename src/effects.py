@@ -9,15 +9,15 @@ def create_wave_effect(colors: list[tuple[int, int, int]], line_orientation: Lit
     """
     Create a matrix of float colors to be used for a wave effect using the supplied colors in RGB format.
 
-    :param colors: List of RGB colors to be used to create the effect.
-
-    :param line_orientation: `VERTICAL`: Max 24 colors.
+    Args:
+        colors: List of RGB colors to be used to create the effect.
+        line_orientation: `VERTICAL`: Max 24 colors.
     `HORIZONTAL`: Max 8 colors.
-
-    :param mode: `ALTERNATING`: Colors repeat seperated. (Looks best when the number of colors is a factor of the max colors.)
+        mode: `ALTERNATING`: Colors repeat seperated. (Looks best when the number of colors is a factor of the max colors.)
     `CLUSTER`: Colors repeat clumped with themselves.
 
-    :return: The generated wave effect.
+    Returns:
+        The generated wave effect.
     """
     if len(colors) < 2:
         raise ValueError(f"Expected `colors` to have a length no less than 2, got {len(colors)}")
@@ -73,9 +73,11 @@ def create_explosion_effect(color: tuple[int, int, int]) -> list[list[tuple[floa
     """
     Create a matrix of float colors to be used for an explosion effect using the supplied color in RGB format.
 
-    :param color: The RGB color to be used for the effect.
+    Args:
+        color: The RGB color to be used for the effect.
 
-    :return: The generated explosion effect.
+    Returns:
+        The generated explosion effect.
     """
     float_color = rgb_to_float(color)
 
@@ -94,7 +96,8 @@ def update_wave_effect(effect: ChromaEffect) -> None:
     """
     Update a wave effect's colors.
 
-    :param effect: The effect to be updated.
+    Args:
+        effect: The effect to be updated.
     """
     match effect.direction:
         case "UP":
@@ -116,7 +119,8 @@ def update_explosion_effect(effect: ChromaEffect) -> None:
     """
     Update an explosion effect's colors.
 
-    :param effect: The effect to be updated
+    Args:
+        effect: The effect to be updated.
     """
     # Expand left half
     for i in range(3, 5):

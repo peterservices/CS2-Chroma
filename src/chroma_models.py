@@ -38,9 +38,11 @@ class ChromaState(BaseModel):
         """
         Find an effect in the active effects by its id.
 
-        :param id: The effect id to look for.
+        Args:
+            id: The effect id to look for.
 
-        :return: The `ChromaEffect`, if found, or None.
+        Returns:
+            The `ChromaEffect`, if found, or None.
         """
         for effect in self.effects:
             if effect.id == id:
@@ -51,7 +53,8 @@ class ChromaState(BaseModel):
         """
         Add an effect to the effects list, respecting hierarchy. If an effect does not have a valid id, it will be treated as highest hierarchy.
 
-        :param effect: The effect to be added to the active effects.
+        Args:
+            effect: The effect to be added to the active effects.
         """
         effect_id_hierarchy = [ # Lowest to highest
             "movement_key_indicator",
@@ -92,7 +95,8 @@ class ChromaState(BaseModel):
         """
         Remove an effect from the effects list.
 
-        :param effect: The effect to be added to the active effects.
+        Args:
+            effect: The effect to be added to the active effects.
         """
         if effect in self.effects:
             with self.lock:
