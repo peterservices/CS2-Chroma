@@ -4,7 +4,7 @@ license = "MIT"
 version = "0.1.9"
 requires-python = ">=3.13"
 dependencies = [
-    "pydantic>=2.12.5",
+    "pydantic>=2.13.5",
     "websocket-client>=1.9.2",
     "winrt-windows-foundation>=3.2.1",
     "winrt-windows-media-control>=3.2.1",
@@ -12,8 +12,8 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pre-commit>=4.6.0",
-    "pyinstaller>=6.19.0",
+    "pre-commit>=4.6.2",
+    "pyinstaller>=6.22.3",
 ]
 
 [tool.ruff.lint]
