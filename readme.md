@@ -40,3 +40,9 @@ All features are toggle-able via a JSON file generated when you first run the sc
 
 > [!IMPORTANT]
 > CS2-Chroma is not affiliated or endorsed in any way by Razer, Valve, or any of their subsidaries
+
+---
+
+YouTube demo:
+
+[![Video demonstration of the mod](https://img.youtube.com/vi/Rkk4cOuAJx0/0.jpg)](https://www.youtube.com/watch?v=Rkk4cOuAJx0)
