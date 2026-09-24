@@ -4,6 +4,7 @@ import logging
 import threading
 import time
 from copy import deepcopy
+from typing import Any
 
 import websocket
 
@@ -33,7 +34,7 @@ class ChromaControl(websocket.WebSocket):
         Connect to the Razer Chroma SDK.
         """
         self.connect(WEBSOCKET_URI)
-        self.send(json.dumps({
+        self.chroma_send({
             "title": "Counter-Strike 2 Razer Chroma Integration",
             "description": "Get RGB feedback to actions in-game!",
             "author": {
@@ -44,12 +45,12 @@ class ChromaControl(websocket.WebSocket):
                 "keyboard"
             ],
             "category": "application"
-        }))
+        })
         self.chroma_connected_event.set()
         self.chroma_state = ChromaState()
 
         time.sleep(2) # Give the Chroma SDK time to intialize the app before resetting the keyboard RGB
-        self.send(json.dumps({"endpoint": "keyboard", "effect": "CHROMA_NONE"}))
+        self.chroma_send({"endpoint": "keyboard", "effect": "CHROMA_NONE"})
         logger.info(f"Connected to {WEBSOCKET_URI}")
 
     def chroma_disconnect(self) -> None:
@@ -60,6 +61,27 @@ class ChromaControl(websocket.WebSocket):
         self.close()
 
         logger.info(f"Disconnected from {WEBSOCKET_URI}")
+
+    def chroma_send(self, payload: Any, *, try_reconnect: bool = True) -> bool:
+        """
+        Send data through the Razer Chroma SDK.
+
+        Args:
+            try_reconnect: Whether a reconnection should be attempted if the websocket is closed unexpectedly.
+
+        Returns:
+            Whether the payload was sent successfully.
+        """
+        if self.chroma_connected_event.is_set():
+            try:
+                self.send(json.dumps(payload))
+                return True
+            except websocket.WebSocketConnectionClosedException:
+                if try_reconnect:
+                    self.chroma_disconnect()
+                    self.chroma_connect()
+                    return self.chroma_send(payload, try_reconnect=False)
+        return False
 
     def chroma_update_effects(self) -> None:
         """
@@ -143,18 +165,18 @@ class ChromaControl(websocket.WebSocket):
                         for column, column_v in enumerate(row_v):
                             colors[row][column] = float_to_decimal(column_v)
 
-                    self.send(json.dumps({
+                    self.chroma_send({
                         "endpoint": "keyboard",
                         "effect": "CHROMA_CUSTOM2",
                         "param": {
                            "color": colors,
                            "key": [[0 for _ in range(22)] for _ in range(6)] # Make key param all zeros because it's not needed
                         }
-                    }))
+                    })
                 elif effect_changed:
-                    self.send(json.dumps({
+                    self.chroma_send({
                         "endpoint": "keyboard",
                         "effect": "CHROMA_NONE"
-                    }))
+                    })
 
 # By @peterservices
