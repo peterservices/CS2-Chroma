@@ -7,7 +7,7 @@ import time
 from typing import Any
 
 from chroma_manager import ChromaControl
-from chroma_models import ChromaEffect
+from chroma_models import ChromaKeyboardEffect
 from color_conversions import rgb_to_float
 from effects import create_explosion_effect, create_wave_effect
 from media_manager import start_playback, stop_playback
@@ -84,7 +84,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                         case "exploded":
                             if self.server.config.effects.bomb_explosion_effect:
                                 bomb_colors = create_explosion_effect((255, 81, 0))
-                                bomb_effect = ChromaEffect(
+                                bomb_effect = ChromaKeyboardEffect(
                                     type="EXPLOSION",
                                     method="FILL_NO_ZERO",
                                     colors=bomb_colors,
@@ -138,7 +138,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                     if self.server.config.effects.death_effect:
                         if _payload["health"] == 0:
                             death_color = rgb_to_float((255, 0, 0))
-                            death_effect = ChromaEffect(
+                            death_effect = ChromaKeyboardEffect(
                                 type="STATIC",
                                 method="FILL",
                                 colors=[[death_color for _ in range(24)] for _ in range(8)],
@@ -146,7 +146,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                             )
                             chroma_control.chroma_state.add_effect(death_effect)
                         elif _payload["health"] > gamestate_manager.player.state.health:
-                            effect = chroma_control.chroma_state.find_effect_by_id("death")
+                            effect = chroma_control.chroma_state.find_effect_by_id("death", "KEYBOARD")
                             if effect is not None:
                                 chroma_control.chroma_state.remove_effect(effect)
                     gamestate_manager.player.state.health = _payload["health"]
@@ -157,7 +157,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 if gamestate_manager.player.state.round_kills != _payload["round_kills"]:
                     if not player_changed and self.server.config.effects.kill_effect and _payload["round_kills"] > gamestate_manager.player.state.round_kills:
-                        effect = chroma_control.chroma_state.find_effect_by_id("kill")
+                        effect = chroma_control.chroma_state.find_effect_by_id("kill", "KEYBOARD")
                         if effect:
                             chroma_control.chroma_state.remove_effect(effect)
                         if gamestate_manager.player.team == "CT":
@@ -167,7 +167,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
 
                         if _payload["round_kills"] % 5 != 0:
                             kill_color = rgb_to_float(kill_color)
-                            kill_effect = ChromaEffect(
+                            kill_effect = ChromaKeyboardEffect(
                                 type="STATIC",
                                 method="FILL",
                                 colors=[[kill_color for _ in range(24)] for _ in range(8)],
@@ -179,7 +179,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                             )
                         else:
                             kill_colors = create_explosion_effect(kill_color)
-                            kill_effect = ChromaEffect(
+                            kill_effect = ChromaKeyboardEffect(
                                 type="EXPLOSION",
                                 method="FILL_NO_ZERO",
                                 colors=kill_colors,
@@ -197,12 +197,12 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 if gamestate_manager.player.state.is_flashed != (_payload["flashed"] != 0):
                     if self.server.config.effects.flash_effect:
-                        effect = chroma_control.chroma_state.find_effect_by_id("flash")
+                        effect = chroma_control.chroma_state.find_effect_by_id("flash", "KEYBOARD")
                         if _payload["flashed"] != 0:
                             if effect is not None:
                                 chroma_control.chroma_state.remove_effect(effect)
                             flash_color = rgb_to_float((255, 255, 255))
-                            flash_effect = ChromaEffect(
+                            flash_effect = ChromaKeyboardEffect(
                                 type="STATIC",
                                 method="ADD",
                                 colors=[[flash_color for _ in range(24)] for _ in range(8)],
@@ -218,12 +218,12 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 if gamestate_manager.player.state.in_smoke != (_payload["smoked"] != 0):
                     if self.server.config.effects.smoke_effect:
-                        effect = chroma_control.chroma_state.find_effect_by_id("smoke")
+                        effect = chroma_control.chroma_state.find_effect_by_id("smoke", "KEYBOARD")
                         if _payload["smoked"] != 0:
                             if effect is not None:
                                 chroma_control.chroma_state.remove_effect(effect)
                             smoke_color = rgb_to_float((100, 100, 100))
-                            smoke_effect = ChromaEffect(
+                            smoke_effect = ChromaKeyboardEffect(
                                 type="STATIC",
                                 method="ADD",
                                 colors=[[smoke_color for _ in range(24)] for _ in range(8)],
@@ -239,12 +239,12 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 if gamestate_manager.player.state.is_burning != (_payload["burning"] == 255):
                     if self.server.config.effects.burning_effect:
-                        effect = chroma_control.chroma_state.find_effect_by_id("fire")
+                        effect = chroma_control.chroma_state.find_effect_by_id("fire", "KEYBOARD")
                         if _payload["burning"] == 255:
                             if effect is not None:
                                 chroma_control.chroma_state.remove_effect(effect)
                             burn_colors = create_wave_effect(colors=[(255, 81, 0), (255, 0, 0)], line_orientation="HORIZONTAL", mode="ALTERNATING")
-                            burn_effect = ChromaEffect(
+                            burn_effect = ChromaKeyboardEffect(
                                 type="WAVE",
                                 method="ADD",
                                 direction="UP",
@@ -279,13 +279,13 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
 
                         if v.get("ammo_clip") is not None and v["ammo_clip"] != weapons_dict[k].ammo_clip:
                             if v["ammo_clip"] < weapons_dict[k].ammo_clip and weapons_dict[k].active and self.server.config.effects.shoot_effect:
-                                effect = chroma_control.chroma_state.find_effect_by_id("shoot")
+                                effect = chroma_control.chroma_state.find_effect_by_id("shoot", "KEYBOARD")
                                 if effect is not None:
                                     effect.expires_after_updates = 1
                                     effect.last_update = time.time()
                                 else:
                                     shoot_color = rgb_to_float((25, 25, 25))
-                                    shoot_effect = ChromaEffect(
+                                    shoot_effect = ChromaKeyboardEffect(
                                         type="STATIC",
                                         method="ADD",
                                         colors=[[shoot_color for _ in range(24)] for _ in range(8)],
@@ -361,10 +361,10 @@ class GamestateServer(http.server.HTTPServer):
                 with self.chroma_control.chroma_state.lock:
                     # Update defusal indicator
                     if self.config.defusal_indicator:
-                        effect = self.chroma_control.chroma_state.find_effect_by_id("defusal_indicator")
+                        effect = self.chroma_control.chroma_state.find_effect_by_id("defusal_indicator", "KEYBOARD")
                         if self.gamestate_manager.round is not None and self.gamestate_manager.round.bomb_plant_time is not None and self.gamestate_manager.round.bomb == "planted":
                             if effect is None:
-                                effect = ChromaEffect(
+                                effect = ChromaKeyboardEffect(
                                     type="STATIC",
                                     method="FILL_NO_ZERO",
                                     colors=[[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)],
@@ -385,7 +385,7 @@ class GamestateServer(http.server.HTTPServer):
 
                     # Update game result indicator
                     if self.config.effects.game_result_effect:
-                        effect = self.chroma_control.chroma_state.find_effect_by_id("result")
+                        effect = self.chroma_control.chroma_state.find_effect_by_id("result", "KEYBOARD")
                         if self.gamestate_manager.map is not None and self.gamestate_manager.map.phase == "gameover":
                             if effect is None:
                                 if self.gamestate_manager.local_player and ((self.gamestate_manager.local_player.team == "CT" and self.gamestate_manager.map.ct_team.score > self.gamestate_manager.map.t_team.score) or (self.gamestate_manager.local_player.team == "T" and self.gamestate_manager.map.ct_team.score < self.gamestate_manager.map.t_team.score)):
@@ -395,7 +395,7 @@ class GamestateServer(http.server.HTTPServer):
                                 else:
                                     result_colors = create_wave_effect(colors=[(150, 150, 150), (205, 205, 205), (90, 90, 90)], line_orientation="VERTICAL", mode="CLUSTER")
 
-                                effect = ChromaEffect(
+                                effect = ChromaKeyboardEffect(
                                     type="WAVE",
                                     method="FILL",
                                     direction="RIGHT",
@@ -409,7 +409,7 @@ class GamestateServer(http.server.HTTPServer):
 
                     # Update movement key indicators
                     if self.config.movement_key_indicators:
-                        effect = self.chroma_control.chroma_state.find_effect_by_id("movement_key_indicator")
+                        effect = self.chroma_control.chroma_state.find_effect_by_id("movement_key_indicator", "KEYBOARD")
                         if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None:
                             if effect is None:
                                 key_colors = [[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)]
@@ -428,7 +428,7 @@ class GamestateServer(http.server.HTTPServer):
                                 # SPACE
                                 key_colors[6][5:12] = [key_color for _ in range(7)]
 
-                                effect = ChromaEffect(
+                                effect = ChromaKeyboardEffect(
                                     type="STATIC",
                                     method="FILL_NO_ZERO",
                                     direction="RIGHT",
@@ -441,7 +441,7 @@ class GamestateServer(http.server.HTTPServer):
 
                     # Update interaction key indicators
                     if self.config.interaction_key_indicators:
-                        effect = self.chroma_control.chroma_state.find_effect_by_id("interaction_key_indicator")
+                        effect = self.chroma_control.chroma_state.find_effect_by_id("interaction_key_indicator", "KEYBOARD")
                         if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None:
                             if effect is None:
                                 key_colors = [[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)]
@@ -459,7 +459,7 @@ class GamestateServer(http.server.HTTPServer):
                                 key_colors[5][6:9] = [key_color for _ in range(3)]
                                 key_colors[5][10] = key_color
 
-                                effect = ChromaEffect(
+                                effect = ChromaKeyboardEffect(
                                     type="STATIC",
                                     method="FILL_NO_ZERO",
                                     direction="RIGHT",
@@ -472,14 +472,14 @@ class GamestateServer(http.server.HTTPServer):
 
                     # Update inventory key indicators depending on inventory content
                     if self.config.inventory_key_indicators:
-                        effect = self.chroma_control.chroma_state.find_effect_by_id("inventory_key_indicator")
+                        effect = self.chroma_control.chroma_state.find_effect_by_id("inventory_key_indicator", "KEYBOARD")
                         if self.gamestate_manager.map is not None and self.gamestate_manager.player is not None and self.gamestate_manager.player.state is not None:
                             colors = [[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)]
                             key_color = rgb_to_float((65, 58, 39))
                             key_color_low = rgb_to_float((155, 148, 39))
                             key_color_empty = rgb_to_float((155, 58, 39))
                             if effect is None:
-                                effect = ChromaEffect(
+                                effect = ChromaKeyboardEffect(
                                     type="STATIC",
                                     method="FILL_NO_ZERO",
                                     colors=colors,

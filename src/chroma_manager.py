@@ -90,7 +90,7 @@ class ChromaControl(websocket.WebSocket):
             expiring_effects = []
             effect_changed = False
             with self.chroma_state.lock:
-                for effect in self.chroma_state.effects:
+                for effect in self.chroma_state.keyboard_effects:
                     if effect.update_rate is not None and time.time() - effect.last_update >= effect.update_rate:
                         if effect.expires_after_updates is not None:
                             if effect.expires_after_updates == 0:
@@ -121,16 +121,16 @@ class ChromaControl(websocket.WebSocket):
                                 update_explosion_effect(effect)
                         effect.last_update = time.time()
                 for effect in expiring_effects:
-                    self.chroma_state.effects.remove(effect)
+                    self.chroma_state.keyboard_effects.remove(effect)
 
                 if not effect_changed:
-                    effect_changed = self.chroma_state.effects != self.chroma_state.previous_effects
+                    effect_changed = self.chroma_state.keyboard_effects != self.chroma_state.previous_keyboard_effects
                 if effect_changed:
-                    self.chroma_state.previous_effects = deepcopy(self.chroma_state.effects)
+                    self.chroma_state.previous_keyboard_effects = deepcopy(self.chroma_state.keyboard_effects)
 
-                if effect_changed and len(self.chroma_state.effects) > 0:
+                if effect_changed and len(self.chroma_state.keyboard_effects) > 0:
                     colors = [[(0.0, 0.0, 0.0) for _ in range(24)] for _ in range(8)]
-                    for effect in self.chroma_state.effects:
+                    for effect in self.chroma_state.keyboard_effects:
                         match effect.method:
                             case "ADD":
                                 # Add everything
