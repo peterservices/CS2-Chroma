@@ -68,24 +68,24 @@ class GameState(BaseModel):
     last_heartbeat: float = 0
 
 class EffectConfiguration(BaseModel):
-    shoot_effect: bool = True
-    kill_effect: bool = True
-    smoke_effect: bool = True
-    burning_effect: bool = True
-    flash_effect: bool = True
-    death_effect: bool = True
     bomb_explosion_effect: bool = True
+    burning_effect: bool = True
+    death_effect: bool = True
+    flash_effect: bool = True
     game_result_effect: bool = True
+    kill_effect: bool = True
+    shoot_effect: bool = True
+    smoke_effect: bool = True
 
 class Configuration(BaseModel):
-    show_effects_for_others: bool = True
     close_after_game_close: bool = True
-    pause_system_media_while_alive: bool = False
-    effects: EffectConfiguration = EffectConfiguration()
     defusal_indicator: bool = False
-    movement_key_indicators: bool = True
+    effects: EffectConfiguration = EffectConfiguration()
     inventory_key_indicators: bool = True
     interaction_key_indicators: bool = False
+    movement_key_indicators: bool = True
+    pause_system_media_while_alive: bool = False
+    show_effects_for_others: bool = True
 
 def async_to_sync(coro: Coroutine) -> Any:
     try:
