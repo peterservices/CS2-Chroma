@@ -87,8 +87,6 @@ class ChromaControl(websocket.WebSocket):
         Update the keyboard's color with active effects, and update any effect animations.
         """
         while True:
-            self.chroma_connected_event.wait()
-
             expiring_effects = []
             effect_changed = False
             with self.chroma_state.lock:
@@ -164,18 +162,20 @@ class ChromaControl(websocket.WebSocket):
                         for column, column_v in enumerate(row_v):
                             colors[row][column] = float_to_decimal(column_v)
 
-                    self.chroma_send({
-                        "endpoint": "keyboard",
-                        "effect": "CHROMA_CUSTOM2",
-                        "param": {
-                           "color": colors,
-                           "key": [[0 for _ in range(22)] for _ in range(6)] # Make key param all zeros because it's not needed
-                        }
-                    })
+                    if self.chroma_connected_event.is_set(): # Only send data if we are connected
+                        self.chroma_send({
+                            "endpoint": "keyboard",
+                            "effect": "CHROMA_CUSTOM2",
+                            "param": {
+                               "color": colors,
+                               "key": [[0 for _ in range(22)] for _ in range(6)] # Make key param all zeros because it's not needed
+                            }
+                        })
                 elif effect_changed:
-                    self.chroma_send({
-                        "endpoint": "keyboard",
-                        "effect": "CHROMA_NONE"
-                    })
+                    if self.chroma_connected_event.is_set(): # Only send data if we are connected
+                        self.chroma_send({
+                            "endpoint": "keyboard",
+                            "effect": "CHROMA_NONE"
+                        })
 
 # By @peterservices
