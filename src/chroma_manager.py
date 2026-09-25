@@ -72,15 +72,14 @@ class ChromaControl(websocket.WebSocket):
         Returns:
             Whether the payload was sent successfully.
         """
-        if self.chroma_connected_event.is_set():
-            try:
-                self.send(json.dumps(payload))
-                return True
-            except websocket.WebSocketConnectionClosedException:
-                if try_reconnect:
-                    self.chroma_disconnect()
-                    self.chroma_connect()
-                    return self.chroma_send(payload, try_reconnect=False)
+        try:
+            self.send(json.dumps(payload))
+            return True
+        except (ConnectionError, websocket.WebSocketConnectionClosedException):
+            if try_reconnect and self.chroma_connected_event.is_set():
+                self.chroma_disconnect()
+                self.chroma_connect()
+                return self.chroma_send(payload, try_reconnect=False)
         return False
 
     def chroma_update_effects(self) -> None:
