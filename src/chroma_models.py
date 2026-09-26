@@ -1,9 +1,11 @@
 # IMPORTS
+from copy import deepcopy
 from threading import Lock
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
+type DEVICE_TYPE = Literal["KEYBOARD", "MOUSE", "HEADSET"]
 
 class ChromaEffect(BaseModel):
     """
@@ -21,6 +23,8 @@ class ChromaEffect(BaseModel):
 class ChromaKeyboardEffect(ChromaEffect):
     """
     Keyboard Chroma effect.
+
+    colors: 8 x 24 list
     """
     type: Literal["STATIC", "WAVE", "EXPLOSION"]
     direction: Literal["UP", "RIGHT", "DOWN", "LEFT"] | None = None
@@ -79,9 +83,12 @@ class ChromaState(BaseModel):
     mouse_effects: list[ChromaMouseEffect] = []
     previous_mouse_effects: list[ChromaMouseEffect] = []
 
+    headset_effects: list[ChromaHeadsetEffect] = []
+    previous_headset_effects: list[ChromaHeadsetEffect] = []
+
     lock: Lock = Lock()
 
-    def find_effect_by_id(self, id: str, device: Literal["KEYBOARD", "MOUSE"]) -> ChromaKeyboardEffect | ChromaMouseEffect | None:
+    def find_effect_by_id(self, id: str, device: DEVICE_TYPE) -> ChromaKeyboardEffect | ChromaMouseEffect | ChromaHeadsetEffect | None:
         """
         Find an effect in the specified effects list by its id.
 
@@ -92,35 +99,21 @@ class ChromaState(BaseModel):
         Returns:
             The `ChromaEffect` subclass, if found, or None.
         """
-        effects: list[ChromaKeyboardEffect | ChromaMouseEffect]
-        match device:
-            case "KEYBOARD":
-                effects = self.keyboard_effects
-            case "MOUSE":
-                effects = self.mouse_effects
-            case _:
-                raise ValueError(f"Unexpected device of {device}")
+        effects = self.get_effects_list_from_device_type(device)
 
         for effect in effects:
             if effect.id == id:
                 return effect
         return None
 
-    def add_effect(self, effect: ChromaKeyboardEffect | ChromaMouseEffect) -> None:
+    def add_effect(self, effect: ChromaKeyboardEffect | ChromaMouseEffect | ChromaHeadsetEffect) -> None:
         """
         Add an effect to the effects list, respecting hierarchy. If an effect does not have a valid id, it will be treated as highest hierarchy.
 
         Args:
             effect: The effect to be added to the active effects.
         """
-        if isinstance(effect, ChromaKeyboardEffect):
-            effects = self.keyboard_effects
-            device_type = "KEYBOARD"
-        elif isinstance(effect, ChromaMouseEffect):
-            effects = self.mouse_effects
-            device_type = "MOUSE"
-        else:
-            raise TypeError("Expected either a Chroma keyboard or mouse effect.")
+        effects, device = self.get_effects_list_from_effect_type(effect)
 
         effect_id_hierarchy = [ # Lowest to highest
             "movement_key_indicator",
@@ -143,7 +136,7 @@ class ChromaState(BaseModel):
                     effects.insert(highest_available_index, effect)
                     return
 
-                found_effect = self.find_effect_by_id(id, device_type)
+                found_effect = self.find_effect_by_id(id, device)
                 if found_effect is not None:
                     highest_available_index = effects.index(found_effect) + 1
 
@@ -154,24 +147,19 @@ class ChromaState(BaseModel):
         else:
             effects.append(effect)
 
-    def remove_effect(self, effect: ChromaKeyboardEffect | ChromaMouseEffect) -> None:
+    def remove_effect(self, effect: ChromaKeyboardEffect | ChromaMouseEffect | ChromaHeadsetEffect) -> None:
         """
         Remove an effect from the effects list.
 
         Args:
             effect: The effect to be removed from the active effects.
         """
-        if isinstance(effect, ChromaKeyboardEffect):
-            effects = self.keyboard_effects
-        elif isinstance(effect, ChromaMouseEffect):
-            effects = self.mouse_effects
-        else:
-            raise TypeError("Expected either a Chroma keyboard or mouse effect.")
+        effects, _ = self.get_effects_list_from_effect_type(effect)
 
         if effect in effects:
             effects.remove(effect)
 
-    def remove_effects_by_id(self, id: str, devices: list[Literal["KEYBOARD", "MOUSE"]]) -> None:
+    def remove_effects_by_id(self, id: str, devices: list[DEVICE_TYPE]) -> None:
         """
         Remove effects from the specified effects lists by their ids.
 
@@ -190,6 +178,62 @@ class ChromaState(BaseModel):
         """
         effect_ids: list[str] = ["death", "kill", "flash", "smoke", "fire", "shoot"]
         for id in effect_ids:
-            self.remove_effects_by_id(id, ["KEYBOARD", "MOUSE"])
+            self.remove_effects_by_id(id, ["KEYBOARD", "MOUSE", "HEADSET"])
+
+    def get_previous_effects(self, device: DEVICE_TYPE) -> list[ChromaKeyboardEffect | ChromaMouseEffect | ChromaHeadsetEffect]:
+        """
+        Get a previously backed up copy of the specified effects list.
+        """
+        match device:
+            case "KEYBOARD":
+                return self.previous_keyboard_effects
+            case "MOUSE":
+                return self.previous_mouse_effects
+            case "HEADSET":
+                return self.previous_headset_effects
+            case _:
+                raise ValueError(f"Unexpected device of {device}")
+
+    def save_previous_effects(self, device: DEVICE_TYPE) -> None:
+        """
+        Save a deep copy of the specified effects list.
+        """
+        effects = self.get_effects_list_from_device_type(device)
+
+        match device:
+            case "KEYBOARD":
+                self.previous_keyboard_effects = deepcopy(effects)
+            case "MOUSE":
+                self.previous_mouse_effects = deepcopy(effects)
+            case "HEADSET":
+                self.previous_headset_effects = deepcopy(effects)
+            case _:
+                raise ValueError(f"Unexpected device of {device}")
+
+    def get_effects_list_from_device_type(self, device: DEVICE_TYPE) -> list[ChromaKeyboardEffect | ChromaMouseEffect | ChromaHeadsetEffect]:
+        """
+        Get the corresponding effects list from the device type.
+        """
+        match device:
+            case "KEYBOARD":
+                return self.keyboard_effects
+            case "MOUSE":
+                return self.mouse_effects
+            case "HEADSET":
+                return self.headset_effects
+            case _:
+                raise ValueError(f"Unexpected device of {device}")
+
+    def get_effects_list_from_effect_type(self, effect: ChromaKeyboardEffect | ChromaMouseEffect | ChromaHeadsetEffect) -> tuple[list[ChromaKeyboardEffect | ChromaMouseEffect | ChromaHeadsetEffect], DEVICE_TYPE]:
+        """
+        Get the corresponding effects list and device type from the effect type.
+        """
+        if isinstance(effect, ChromaKeyboardEffect):
+            return (self.keyboard_effects, "KEYBOARD")
+        if isinstance(effect, ChromaMouseEffect):
+            return (self.mouse_effects, "MOUSE")
+        if isinstance(effect, ChromaHeadsetEffect):
+            return (self.headset_effects, "HEADSET")
+        raise TypeError("Expected either a Chroma keyboard or mouse effect.")
 
 # By @peterservices

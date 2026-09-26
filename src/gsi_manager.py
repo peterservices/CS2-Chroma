@@ -146,9 +146,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                             )
                             chroma_control.chroma_state.add_effect(death_effect)
                         elif _payload["health"] > gamestate_manager.player.state.health:
-                            effect = chroma_control.chroma_state.find_effect_by_id("death", "KEYBOARD")
-                            if effect is not None:
-                                chroma_control.chroma_state.remove_effect(effect)
+                            chroma_control.chroma_state.remove_effects_by_id("death", ["KEYBOARD", "MOUSE", "HEADSET"])
                     gamestate_manager.player.state.health = _payload["health"]
 
                 gamestate_manager.player.state.armor_health = _payload["armor"]
@@ -157,9 +155,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 if gamestate_manager.player.state.round_kills != _payload["round_kills"]:
                     if not player_changed and self.server.config.effects.kill_effect and _payload["round_kills"] > gamestate_manager.player.state.round_kills:
-                        effect = chroma_control.chroma_state.find_effect_by_id("kill", "KEYBOARD")
-                        if effect:
-                            chroma_control.chroma_state.remove_effect(effect)
+                        chroma_control.chroma_state.remove_effects_by_id("kill", ["KEYBOARD", "MOUSE"])
                         if gamestate_manager.player.team == "CT":
                             kill_color = (93, 121, 174)
                         else:
