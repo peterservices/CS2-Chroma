@@ -10,6 +10,8 @@ class ChromaEffect(BaseModel):
     Base Chroma effect.
     """
     method: Literal["ADD", "FILL", "FILL_EMPTY", "FILL_NO_ZERO", "MULTIPLY"]
+    type: Literal["STATIC"] = "STATIC"
+    colors: list[list[tuple[float, float, float]]]
     decay_amount: float | None = None
     update_rate: float | None = None
     last_update: float = 0
@@ -22,7 +24,6 @@ class ChromaKeyboardEffect(ChromaEffect):
     """
     type: Literal["STATIC", "WAVE", "EXPLOSION"]
     direction: Literal["UP", "RIGHT", "DOWN", "LEFT"] | None = None
-    colors: list[list[tuple[float, float, float]]]
 
     @field_validator("colors", mode="after")
     @classmethod
