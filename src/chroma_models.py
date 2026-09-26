@@ -38,8 +38,36 @@ class ChromaKeyboardEffect(ChromaEffect):
 class ChromaMouseEffect(ChromaEffect):
     """
     Mouse Chroma effect.
+
+    colors: 1 x 1 list
     """
-    color: tuple[float, float, float]
+    @field_validator("colors", mode="after")
+    @classmethod
+    def validate_colors_dimensions(cls, value: list[list[tuple[float, float, float]]]) -> list[list[tuple[float, float, float]]]:
+        if len(value) != 1:
+            raise ValueError(f"Expected outer list to have a length of 1, got {len(value)}")
+        for inner_list in value:
+            if len(inner_list) != 1:
+                raise ValueError(f"Expected inner list to have a length of 1, got {len(inner_list)}")
+
+        return value
+
+class ChromaHeadsetEffect(ChromaEffect):
+    """
+    Headset Chroma effect.
+
+    colors: 1 x 1 list
+    """
+    @field_validator("colors", mode="after")
+    @classmethod
+    def validate_colors_dimensions(cls, value: list[list[tuple[float, float, float]]]) -> list[list[tuple[float, float, float]]]:
+        if len(value) != 1:
+            raise ValueError(f"Expected outer list to have a length of 1, got {len(value)}")
+        for inner_list in value:
+            if len(inner_list) != 1:
+                raise ValueError(f"Expected inner list to have a length of 1, got {len(inner_list)}")
+
+        return value
 
 class ChromaState(BaseModel):
     model_config: ConfigDict = ConfigDict(arbitrary_types_allowed=True)

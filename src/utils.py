@@ -68,6 +68,7 @@ class GameState(BaseModel):
     last_heartbeat: float = 0
 
 class DeviceConfiguration(BaseModel):
+    headset: bool = True
     keyboard: bool = True
     mouse: bool = True
 
