@@ -48,11 +48,15 @@ class ChromaControl(websocket.WebSocket):
             ],
             "category": "application"
         })
-        self.chroma_connected_event.set()
-        self.chroma_state = ChromaState()
 
         time.sleep(2) # Give the Chroma SDK time to intialize the app before resetting the keyboard RGB
-        self.chroma_send({"endpoint": "keyboard", "effect": "CHROMA_NONE"})
+        for device, enabled in self.config.devices:
+            if not enabled:
+                continue
+            self.chroma_send({"endpoint": device, "effect": "CHROMA_NONE"}) # Clear Chroma effects for all active devices
+
+        self.chroma_connected_event.set()
+        self.chroma_state = ChromaState()
         logger.info(f"Connected to {WEBSOCKET_URI}")
 
     def chroma_disconnect(self) -> None:
