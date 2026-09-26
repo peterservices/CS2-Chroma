@@ -11,6 +11,7 @@ import websocket
 from chroma_models import ChromaState
 from color_conversions import float_to_decimal
 from effects import update_explosion_effect, update_wave_effect
+from utils import Configuration
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +21,12 @@ class ChromaControl(websocket.WebSocket):
     """
     Custom `websocket.WebSocket` implementation to control Razer Chroma enabled devices.
     """
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, config: Configuration) -> None:
+        self.config = config
         self.chroma_state = ChromaState()
         self.chroma_connected_event = threading.Event()
 
-        super().__init__(*args, **kwargs)
+        super().__init__()
 
         chroma_effect_thread = threading.Thread(target=self.chroma_update_effects, daemon=True)
         chroma_effect_thread.start()
