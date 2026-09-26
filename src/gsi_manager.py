@@ -7,7 +7,7 @@ import time
 from typing import Any
 
 from chroma_manager import ChromaControl
-from chroma_models import ChromaKeyboardEffect
+from chroma_models import ChromaHeadsetEffect, ChromaKeyboardEffect, ChromaMouseEffect
 from color_conversions import rgb_to_float
 from effects import create_explosion_effect, create_wave_effect
 from media_manager import start_playback, stop_playback
@@ -138,13 +138,27 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                     if self.server.config.effects.death_effect:
                         if _payload["health"] == 0:
                             death_color = rgb_to_float((255, 0, 0))
-                            death_effect = ChromaKeyboardEffect(
+                            keyboard_death_effect = ChromaKeyboardEffect(
                                 type="STATIC",
                                 method="FILL",
                                 colors=[[death_color for _ in range(24)] for _ in range(8)],
                                 id="death",
                             )
-                            chroma_control.chroma_state.add_effect(death_effect)
+                            mouse_death_effect = ChromaMouseEffect(
+                                type="STATIC",
+                                method="FILL",
+                                colors=[[death_color]],
+                                id="death",
+                            )
+                            headset_death_effect = ChromaHeadsetEffect(
+                                type="STATIC",
+                                method="FILL",
+                                colors=[[death_color]],
+                                id="death",
+                            )
+                            chroma_control.chroma_state.add_effect(keyboard_death_effect)
+                            chroma_control.chroma_state.add_effect(mouse_death_effect)
+                            chroma_control.chroma_state.add_effect(headset_death_effect)
                         elif _payload["health"] > gamestate_manager.player.state.health:
                             chroma_control.chroma_state.remove_effects_by_id("death", ["KEYBOARD", "MOUSE", "HEADSET"])
                     gamestate_manager.player.state.health = _payload["health"]
@@ -163,7 +177,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
 
                         if _payload["round_kills"] % 5 != 0:
                             kill_color = rgb_to_float(kill_color)
-                            kill_effect = ChromaKeyboardEffect(
+                            keyboard_kill_effect = ChromaKeyboardEffect(
                                 type="STATIC",
                                 method="FILL",
                                 colors=[[kill_color for _ in range(24)] for _ in range(8)],
@@ -173,9 +187,20 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                                 expires_after_updates=5,
                                 id="kill",
                             )
+                            mouse_kill_effect = ChromaMouseEffect(
+                                type="STATIC",
+                                method="FILL",
+                                colors=[[kill_color]],
+                                decay_amount=20/255,
+                                update_rate=0.1,
+                                last_update=time.time(),
+                                expires_after_updates=5,
+                                id="kill",
+                            )
                         else:
                             kill_colors = create_explosion_effect(kill_color)
-                            kill_effect = ChromaKeyboardEffect(
+                            kill_color = rgb_to_float(kill_color)
+                            keyboard_kill_effect = ChromaKeyboardEffect(
                                 type="EXPLOSION",
                                 method="FILL_NO_ZERO",
                                 colors=kill_colors,
@@ -185,7 +210,18 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                                 expires_after_updates=14,
                                 id="kill",
                             )
-                        chroma_control.chroma_state.add_effect(kill_effect)
+                            mouse_kill_effect = ChromaMouseEffect(
+                                type="STATIC",
+                                method="FILL",
+                                colors=[[kill_color]],
+                                decay_amount=5/255,
+                                update_rate=0.1,
+                                last_update=time.time(),
+                                expires_after_updates=14,
+                                id="kill",
+                            )
+                        chroma_control.chroma_state.add_effect(keyboard_kill_effect)
+                        chroma_control.chroma_state.add_effect(mouse_kill_effect)
                     gamestate_manager.player.state.round_kills = _payload["round_kills"]
 
                 gamestate_manager.player.state.round_headshot_kills = _payload["round_killhs"]
@@ -193,23 +229,35 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 if gamestate_manager.player.state.is_flashed != (_payload["flashed"] != 0):
                     if self.server.config.effects.flash_effect:
-                        effect = chroma_control.chroma_state.find_effect_by_id("flash", "KEYBOARD")
+                        keyboard_effect = chroma_control.chroma_state.find_effect_by_id("flash", "KEYBOARD")
+                        headset_effect = chroma_control.chroma_state.find_effect_by_id("flash", "HEADSET")
                         if _payload["flashed"] != 0:
-                            if effect is not None:
-                                chroma_control.chroma_state.remove_effect(effect)
+                            if keyboard_effect is not None:
+                                chroma_control.chroma_state.remove_effect(keyboard_effect)
                             flash_color = rgb_to_float((255, 255, 255))
-                            flash_effect = ChromaKeyboardEffect(
+                            keyboard_flash_effect = ChromaKeyboardEffect(
                                 type="STATIC",
                                 method="ADD",
                                 colors=[[flash_color for _ in range(24)] for _ in range(8)],
                                 id="flash",
                             )
-                            chroma_control.chroma_state.add_effect(flash_effect)
+                            headset_flash_effect = ChromaHeadsetEffect(
+                                type="STATIC",
+                                method="ADD",
+                                colors=[[flash_color]],
+                                id="flash",
+                            )
+                            chroma_control.chroma_state.add_effect(keyboard_flash_effect)
+                            chroma_control.chroma_state.add_effect(headset_flash_effect)
                         else:
-                            if effect is not None:
-                                effect.last_update = time.time()
-                                effect.update_rate = 0.1
-                                effect.decay_amount = 15 / 255
+                            if keyboard_effect is not None:
+                                keyboard_effect.last_update = time.time()
+                                keyboard_effect.update_rate = 0.1
+                                keyboard_effect.decay_amount = 15 / 255
+                            if headset_effect is not None:
+                                headset_effect.last_update = time.time()
+                                headset_effect.update_rate = 0.1
+                                headset_effect.decay_amount = 15 / 255
                     gamestate_manager.player.state.is_flashed = _payload["flashed"] != 0
 
                 if gamestate_manager.player.state.in_smoke != (_payload["smoked"] != 0):
@@ -275,13 +323,14 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
 
                         if v.get("ammo_clip") is not None and v["ammo_clip"] != weapons_dict[k].ammo_clip:
                             if v["ammo_clip"] < weapons_dict[k].ammo_clip and weapons_dict[k].active and self.server.config.effects.shoot_effect:
-                                effect = chroma_control.chroma_state.find_effect_by_id("shoot", "KEYBOARD")
-                                if effect is not None:
-                                    effect.expires_after_updates = 1
-                                    effect.last_update = time.time()
+                                keyboard_effect = chroma_control.chroma_state.find_effect_by_id("shoot", "KEYBOARD")
+                                mouse_effect = chroma_control.chroma_state.find_effect_by_id("shoot", "MOUSE")
+                                if keyboard_effect is not None:
+                                    keyboard_effect.expires_after_updates = 1
+                                    keyboard_effect.last_update = time.time()
                                 else:
                                     shoot_color = rgb_to_float((25, 25, 25))
-                                    shoot_effect = ChromaKeyboardEffect(
+                                    keyboard_shoot_effect = ChromaKeyboardEffect(
                                         type="STATIC",
                                         method="ADD",
                                         colors=[[shoot_color for _ in range(24)] for _ in range(8)],
@@ -290,7 +339,23 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
                                         last_update=time.time(),
                                         id="shoot"
                                     )
-                                    chroma_control.chroma_state.add_effect(shoot_effect)
+                                    chroma_control.chroma_state.add_effect(keyboard_shoot_effect)
+
+                                if mouse_effect is not None:
+                                    mouse_effect.expires_after_updates = 1
+                                    mouse_effect.last_update = time.time()
+                                else:
+                                    shoot_color = rgb_to_float((50, 50, 50))
+                                    mouse_shoot_effect = ChromaMouseEffect(
+                                        type="STATIC",
+                                        method="ADD",
+                                        colors=[[shoot_color]],
+                                        update_rate=0.15,
+                                        expires_after_updates=1,
+                                        last_update=time.time(),
+                                        id="shoot"
+                                    )
+                                    chroma_control.chroma_state.add_effect(mouse_shoot_effect)
                             weapons_dict[k].ammo_clip = v["ammo_clip"]
                     else:
                         if k in weapons_dict:
@@ -323,7 +388,7 @@ class GamestateRequestHandler(http.server.BaseHTTPRequestHandler):
 class GamestateServer(http.server.HTTPServer):
     def __init__(self, address: tuple, RequestHandler: type, config: Configuration) -> None:
         self.gamestate_manager = GameState()
-        self.chroma_control = ChromaControl()
+        self.chroma_control = ChromaControl(config)
         self.config = config
         self.logging = False
 
@@ -348,7 +413,7 @@ class GamestateServer(http.server.HTTPServer):
                     logger.info("Lost connection to game")
                     self.chroma_control.chroma_disconnect()
                     if self.config.close_after_game_close:
-                        self.shutdown()
+                        return self.shutdown()
             elif not self.chroma_control.chroma_connected_event.is_set():
                 logger.info("Connected to game")
                 self.chroma_control.chroma_connect()
@@ -381,9 +446,11 @@ class GamestateServer(http.server.HTTPServer):
 
                     # Update game result indicator
                     if self.config.effects.game_result_effect:
-                        effect = self.chroma_control.chroma_state.find_effect_by_id("result", "KEYBOARD")
+                        keyboard_effect = self.chroma_control.chroma_state.find_effect_by_id("result", "KEYBOARD")
+                        mouse_effect = self.chroma_control.chroma_state.find_effect_by_id("result", "MOUSE")
+                        headset_effect = self.chroma_control.chroma_state.find_effect_by_id("result", "HEADSET")
                         if self.gamestate_manager.map is not None and self.gamestate_manager.map.phase == "gameover":
-                            if effect is None:
+                            if keyboard_effect is None:
                                 if self.gamestate_manager.local_player and ((self.gamestate_manager.local_player.team == "CT" and self.gamestate_manager.map.ct_team.score > self.gamestate_manager.map.t_team.score) or (self.gamestate_manager.local_player.team == "T" and self.gamestate_manager.map.ct_team.score < self.gamestate_manager.map.t_team.score)):
                                     result_colors = create_wave_effect(colors=[(0, 255, 0), (105, 246, 104), (31, 201, 31)], line_orientation="VERTICAL", mode="CLUSTER")
                                 elif self.gamestate_manager.local_player and self.gamestate_manager.map.ct_team.score != self.gamestate_manager.map.t_team.score:
@@ -391,7 +458,7 @@ class GamestateServer(http.server.HTTPServer):
                                 else:
                                     result_colors = create_wave_effect(colors=[(150, 150, 150), (205, 205, 205), (90, 90, 90)], line_orientation="VERTICAL", mode="CLUSTER")
 
-                                effect = ChromaKeyboardEffect(
+                                keyboard_effect = ChromaKeyboardEffect(
                                     type="WAVE",
                                     method="FILL",
                                     direction="RIGHT",
@@ -399,9 +466,38 @@ class GamestateServer(http.server.HTTPServer):
                                     update_rate=0.2,
                                     id="result"
                                 )
-                                self.chroma_control.chroma_state.add_effect(effect)
-                        elif effect is not None:
-                            self.chroma_control.chroma_state.remove_effect(effect)
+                                self.chroma_control.chroma_state.add_effect(keyboard_effect)
+                            if mouse_effect is None or headset_effect is None:
+                                if self.gamestate_manager.local_player and ((self.gamestate_manager.local_player.team == "CT" and self.gamestate_manager.map.ct_team.score > self.gamestate_manager.map.t_team.score) or (self.gamestate_manager.local_player.team == "T" and self.gamestate_manager.map.ct_team.score < self.gamestate_manager.map.t_team.score)):
+                                    result_color = rgb_to_float((0, 255, 0))
+                                elif self.gamestate_manager.local_player and self.gamestate_manager.map.ct_team.score != self.gamestate_manager.map.t_team.score:
+                                    result_color = rgb_to_float((255, 0, 0))
+                                else:
+                                    result_color = rgb_to_float((90, 90, 90))
+
+                                if mouse_effect is None:
+                                    mouse_effect = ChromaMouseEffect(
+                                        method="FILL",
+                                        colors=[[result_color]],
+                                        update_rate=0.2,
+                                        id="result"
+                                    )
+                                    self.chroma_control.chroma_state.add_effect(mouse_effect)
+                                if headset_effect is None:
+                                    headset_effect = ChromaHeadsetEffect(
+                                        method="FILL",
+                                        colors=[[result_color]],
+                                        update_rate=0.2,
+                                        id="result"
+                                    )
+                                    self.chroma_control.chroma_state.add_effect(headset_effect)
+                        else:
+                            if keyboard_effect is not None:
+                                self.chroma_control.chroma_state.remove_effect(keyboard_effect)
+                            if mouse_effect is not None:
+                                self.chroma_control.chroma_state.remove_effect(mouse_effect)
+                            if headset_effect is not None:
+                               self.chroma_control.chroma_state.remove_effect(headset_effect)
 
                     # Update movement key indicators
                     if self.config.movement_key_indicators:
