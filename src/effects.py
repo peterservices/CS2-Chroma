@@ -1,7 +1,7 @@
 # IMPORTS
 from typing import Literal
 
-from chroma_models import ChromaEffect
+from chroma_models import ChromaKeyboardEffect
 from color_conversions import rgb_to_float
 
 
@@ -92,7 +92,7 @@ def create_explosion_effect(color: tuple[int, int, int]) -> list[list[tuple[floa
 
     return pattern
 
-def update_wave_effect(effect: ChromaEffect) -> None:
+def update_wave_effect(effect: ChromaKeyboardEffect) -> None:
     """
     Update a wave effect's colors.
 
@@ -115,7 +115,7 @@ def update_wave_effect(effect: ChromaEffect) -> None:
                 first = v.pop(0)
                 v.append(first)
 
-def update_explosion_effect(effect: ChromaEffect) -> None:
+def update_explosion_effect(effect: ChromaKeyboardEffect) -> None:
     """
     Update an explosion effect's colors.
 

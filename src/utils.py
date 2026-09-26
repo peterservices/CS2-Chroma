@@ -67,6 +67,11 @@ class GameState(BaseModel):
     steam_id: str = ""
     last_heartbeat: float = 0
 
+class DeviceConfiguration(BaseModel):
+    headset: bool = True
+    keyboard: bool = True
+    mouse: bool = True
+
 class EffectConfiguration(BaseModel):
     bomb_explosion_effect: bool = True
     burning_effect: bool = True
@@ -80,6 +85,7 @@ class EffectConfiguration(BaseModel):
 class Configuration(BaseModel):
     close_after_game_close: bool = True
     defusal_indicator: bool = False
+    devices: DeviceConfiguration = DeviceConfiguration()
     effects: EffectConfiguration = EffectConfiguration()
     inventory_key_indicators: bool = True
     interaction_key_indicators: bool = False
