@@ -44,7 +44,9 @@ class ChromaControl(websocket.WebSocket):
                 "contact": "https://github.com/peterservices/CS2-Chroma/issues"
             },
             "device_supported": [
-                "keyboard"
+                "keyboard",
+                "mouse",
+                "headset"
             ],
             "category": "application"
         })
