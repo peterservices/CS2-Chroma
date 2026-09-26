@@ -28,6 +28,12 @@ def setup() -> None:
         with config_file.open("w") as file:
             file.write(to_write)
 
+    enabled_devices = [device for device, enabled in config.devices if enabled]
+    if len(enabled_devices) > 0:
+        logger.info(f"Enabled devices: {", ".join(enabled_devices)}")
+    else:
+        logger.warning("No devices are enabled")
+
     # Get Steam path from registry
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam") as key:
