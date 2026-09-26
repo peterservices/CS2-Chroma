@@ -3,7 +3,7 @@
 [![Build](https://github.com/peterservices/CS2-Chroma/actions/workflows/build.yml/badge.svg)](https://github.com/peterservices/CS2-Chroma/actions/workflows/build.yml)
 [![Ruff](https://github.com/peterservices/CS2-Chroma/actions/workflows/ruff.yml/badge.svg)](https://github.com/peterservices/CS2-Chroma/actions/workflows/ruff.yml)
 
-A configurable Razer Chroma integration that brings the heat of the game to your keyboard with color effects.
+A configurable Razer Chroma integration that brings the heat of the game to your Chroma-enabled devices with color effects.
 
 > [!NOTE]
 > This script is only compatible with Windows.
@@ -15,10 +15,14 @@ A configurable Razer Chroma integration that brings the heat of the game to your
 * Install [Razer Synapse 4 BETA](https://www.razer.com/synapse-4) (Non-BETA will not work)
 * Download and unzip the [latest release](https://github.com/peterservices/CS2-Chroma/releases/latest) (recommended) or [development build](https://github.com/peterservices/CS2-Chroma/actions/workflows/build.yml).
 * Add `"C:\\PATH\\TO\\PROJECT\\start.bat" %command%` to Counter-Strike 2's launch options (Replace the path with your own)
-* Launch the game. If you want to view the configuration first, run start.bat separately and edit the generated `config.json` file.
+* It is recommended to read the configuration first. To do so, run start.bat by itself and edit the generated `config.json` file.
+* Launch the game. CS2-Chroma will now automatically start along with Counter-Strike 2.
 
 ### **Features**
 
+* Supports multiple devices
+  * Keyboards - Full support with special animations
+  * Mice and headsets - Partial support without special animations
 * Colored feedback for in-game actions and events
   * Firing weapons
   * Killing enemies
