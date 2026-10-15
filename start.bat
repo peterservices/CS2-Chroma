@@ -18,8 +18,8 @@ IF EXIST "cs2_chroma.exe" (
         exit /b
     )
 
-    uv python install 3.13
-    uv sync --python 3.13
+    uv python install 3.14
+    uv sync --python 3.14
 
     uv run src/main.py
 )

@@ -2,7 +2,7 @@
 name = "cs2-chroma"
 license = "MIT"
 version = "0.2.0"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
     "pydantic>=2.14.1",
     "websocket-client>=1.9.2",
